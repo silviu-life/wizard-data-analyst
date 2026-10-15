@@ -8,7 +8,7 @@ Un plugin pentru [Claude Code](https://claude.com/claude-code) care transformă 
 
 ## Ce face, pe scurt
 
-- **Citește aproape orice:** CSV, Excel (.xlsx), JSON, PDF (de ex. facturi), Word (.docx), emailuri (.eml), notițe (.md).
+- **Citește aproape orice:** CSV, Excel (.xlsx și .xls), JSON, PDF cu text (de ex. facturi; PDF-urile scanate trebuie exportate din program în Excel/CSV), Word (.docx), emailuri (.eml), notițe (.md).
 - **Curăță datele ca un analist:** aceeași țară scrisă în zece feluri, sume cu `1.234,56` sau `1,234.56`, date în formate amestecate, mai multe monede, rânduri duplicate.
 - **Caută povestea din date:** ce a crescut, ce pierde bani, unde sunt clienții, când pleacă, ce campanii merită oprite. Fiecare concluzie vine cu cifre.
 - **Construiește un dashboard** cu 3–5 taburi și până la 16 tipuri de grafice: linii, bare, donut, funnel, scatter, waterfall, heatmap, cohorte, treemap, calendar, hartă a lumii, tabele sortabile.
@@ -31,7 +31,7 @@ Apoi scrie:
 
 Îți explică pe înțelesul oricui, cu metafore, ce programe îi trebuie (Node.js, Playwright, Python) și de ce. Te întreabă înainte de fiecare instalare și la final face un raport de probă, ca să vezi că totul merge. Dacă le ai deja, trece repede mai departe.
 
-Actualizare: `/plugin marketplace update wizard-data-analyst`.
+Actualizare: în Claude Code scrii `/plugin`, apoi la Marketplaces alegi „Update marketplace” (sau la Installed, „Update now”). Actualizarea automată e oprită implicit pentru pluginurile din afara marketplace-ului oficial, deci o faci tu când apare o versiune nouă.
 
 ## Folosire
 

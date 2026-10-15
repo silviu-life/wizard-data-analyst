@@ -31,11 +31,11 @@ Afli ce sistem are omul și ce e deja instalat. Doar citești, nu schimbi nimic.
 | Ce verifici | Comanda | E în regulă când |
 |---|---|---|
 | Sistemul | `uname -s` (Darwin = macOS, Linux; pe Windows `$env:OS` sau `ver`) | — |
-| Node.js | `node -v` | v18 sau mai nou |
+| Node.js | `node -v` | v22 sau mai nou (Playwright nu mai suportă versiunile mai vechi) |
 | Playwright | `node -e "require('playwright')"`, apoi copia globală: `node -e "require(require('child_process').execSync('npm root -g').toString().trim()+'/playwright')"` | una dintre ele merge |
 | Chromium pentru Playwright | `npx playwright install --dry-run chromium` afișează un folder „Install location” | folderul există |
 | Python | `python3 --version` (pe Windows `python --version` sau `py --version`) | 3.9 sau mai nou |
-| Bibliotecile Python | `python3 -c "import pandas, openpyxl, pdfplumber, docx"` | nicio eroare |
+| Bibliotecile Python | `python3 -c "import pandas, openpyxl, xlrd, pdfplumber, docx"` | nicio eroare |
 
 Mai notezi dacă există un „magazin de programe”: `brew` pe macOS, `winget` pe Windows, `apt` pe Linux. Pe Linux verifici și dacă `sudo` merge fără parolă (`sudo -n true`).
 
@@ -103,7 +103,7 @@ Iei programele care lipsesc în ordinea asta: Node.js, Playwright + Chromium, Py
 >
 > **Playwright** este „robotul” care stă în sala aceea goală. E o unealtă gratuită făcută de Microsoft. Deschide raportul tău în browserul invizibil și se poartă exact ca un om: dă click pe fiecare tab, așteaptă să se deseneze graficele, verifică să nu fie niciun grafic gol sau vreo eroare, apoi face câte o poză la fiecare pagină. Doar dacă totul arată bine, raportul ajunge la tine.
 >
-> Fără degustător, ai putea primi un raport cu un grafic gol sau o pagină care nu se încarcă, și ai afla abia în fața colegilor. Ocupă cam 200 MB, mai ales browserul.
+> Fără degustător, ai putea primi un raport cu un grafic gol sau o pagină care nu se încarcă, și ai afla abia în fața colegilor. Ocupă câteva sute de MB (pe unele calculatoare până la vreo 650 MB), mai ales browserul.
 
 **Dacă vrea mai mult:** Playwright e folosit de mii de companii ca să-și testeze site-urile. Browserul invizibil stă într-un folder separat (`ms-playwright`) și se poate șterge oricând. Playwright pornește doar în cele câteva secunde de verificare, apoi se închide. Nu trimite nimic pe internet despre datele tale: tot ce face rămâne pe calculatorul tău.
 
@@ -125,9 +125,10 @@ Iei programele care lipsesc în ordinea asta: Node.js, Playwright + Chromium, Py
 >
 > Un ajutor de bucătar fără cuțit, fără răzătoare și fără desfăcător de conserve nu poate face mare lucru. La fel, Python singur știe să citească doar fișiere simple. Ca să deschidă un Excel sau un PDF, are nevoie de unelte speciale, numite „biblioteci”. Sunt ca aplicațiile pe care le adaugi pe un telefon nou ca să poată face mai multe lucruri.
 >
-> Instalăm patru:
+> Instalăm cinci:
 > - **pandas** e un tabel uriaș care nu obosește niciodată. Imaginează-ți un Excel în care poți pune milioane de rânduri, pe care le poate sorta, aduna și compara într-o clipă. E principala unealtă de lucru cu date din lume.
 > - **openpyxl** e cheia care deschide fișierele Excel (.xlsx). Fără ea, un Excel e pentru Python ca o cutie încuiată.
+> - **xlrd** e cheia pentru Excel-urile vechi (.xls), pe care le mai dau unele programe de facturare sau platforme.
 > - **pdfplumber** e o lupă cu pensetă pentru PDF-uri. Un PDF e ca o fotografie a unei pagini: îl vezi, dar nu poți „lua” ușor cifrele din el. pdfplumber scoate cu grijă textul și tabelele din facturi, contracte sau rapoarte, ca să poată fi numărate.
 > - **python-docx** e un cititor de documente Word (.docx). Notițele de ședință sau rapoartele scrise în Word devin și ele ingrediente pentru analiză.
 >
@@ -140,13 +141,13 @@ Iei programele care lipsesc în ordinea asta: Node.js, Playwright + Chromium, Py
 | | macOS | Windows | Linux |
 |---|---|---|---|
 | Node.js | cu Homebrew: `brew install node`; fără, prin nvm (fără parolă de administrator): `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh \| bash`, apoi `. "$HOME/.nvm/nvm.sh" && nvm install --lts` | `winget install -e --id OpenJS.NodeJS.LTS` | nvm, la fel ca pe macOS (fără parolă de administrator) |
-| Playwright + Chromium | `npm install -g playwright && npx playwright install chromium` | la fel | la fel; dacă browserul nu pornește din cauza unor biblioteci de sistem lipsă, omul rulează singur: `! sudo npx playwright install-deps chromium` |
+| Playwright + Chromium | `npm install -g playwright && npx playwright install chromium` | la fel | la fel; dacă browserul nu pornește din cauza unor biblioteci de sistem lipsă, omul rulează singur: `! sudo env "PATH=$PATH" npx playwright install-deps chromium` (cu `PATH` păstrat, ca `sudo` să găsească Node-ul pus prin nvm) |
 | Python | de obicei e deja instalat; altfel `brew install python` | `winget install -e --id Python.Python.3.12` | omul rulează singur: `! sudo apt install -y python3 python3-pip` |
-| Bibliotecile Python | `python3 -m pip install --user pandas openpyxl pdfplumber python-docx` | `py -m pip install --user pandas openpyxl pdfplumber python-docx` | ca pe macOS; dacă pip refuză cu „externally-managed-environment”, explici: „Sistemul își păzește propriul Python, ca un proprietar care nu te lasă să muți mobila. Le punem doar în camera ta.” Apoi adaugi `--break-system-packages` (instalează doar pentru utilizatorul tău). |
+| Bibliotecile Python | `python3 -m pip install --user pandas openpyxl xlrd pdfplumber python-docx` | `py -m pip install --user pandas openpyxl xlrd pdfplumber python-docx` | ca pe macOS; dacă pip refuză cu „externally-managed-environment”, explici: „Sistemul își păzește propriul Python, ca un proprietar care nu te lasă să muți mobila. Le punem doar în camera ta.” Apoi adaugi `--break-system-packages` (instalează doar pentru utilizatorul tău). |
 
 **Câteva situații pe care le rezolvi tu, fără să-i încarci pe oameni cu detalii:**
-- **Comenzile cu `sudo` (parola de administrator).** Claude Code nu poate tasta parola în locul omului. Explici cu o metaforă: „Pentru pasul ăsta, sistemul cere cheia de la intrarea în bloc, adică parola cu care deschizi calculatorul. Eu nu am voie să o tastez, așa că te rog să scrii tu, în căsuța de mesaj, comanda de mai jos, cu semnul `!` în față.” Apoi îi dai comanda exactă.
-- **Windows, după winget.** Sesiunea deschisă a lui Claude Code nu „vede” încă programul nou, ca o bucătărie în care aragazul a fost montat, dar n-a fost încă băgat în priză. Încerci întâi calea completă (`"C:\Program Files\nodejs\node.exe" -v`). Dacă nici așa nu merge, spui: „Închide Claude Code, deschide-l din nou și scrie iar /wizard-data-install. Ce e deja instalat sar automat.”
+- **Comenzile cu `sudo` (parola de administrator).** Claude Code nu poate tasta parola în locul omului. Explici cu o metaforă: „Pentru pasul ăsta, sistemul cere cheia de la intrarea în bloc, adică parola cu care deschizi calculatorul. Eu nu am voie să o tastez, așa că te rog să scrii tu, în căsuța de mesaj, comanda de mai jos, cu semnul `!` în față.” Apoi îi dai comanda exactă. Pe WSL, comanda cu `!` poate ieși fără niciun mesaj, pentru că `sudo` așteaptă parola într-un loc pe care Claude Code nu-l arată. Dacă se întâmplă asta, îl rogi pe om să deschidă separat aplicația Ubuntu și să ruleze comanda acolo, fără `!`, apoi să revină aici.
+- **Windows, după winget.** Sesiunea deschisă a lui Claude Code nu „vede” încă programul nou, ca o bucătărie în care aragazul a fost montat, dar n-a fost încă băgat în priză. Încerci întâi calea completă (`"C:\Program Files\nodejs\node.exe" -v`). Dacă nici așa nu merge, spui: „Închide toată fereastra terminalului, nu doar Claude Code. Deschide una nouă, pornește `claude` în același folder și scrie iar /wizard-data-install. Ce e deja instalat sar automat.”
 - **nvm, în aceeași sesiune.** Pui în fața comenzilor următoare `. "$HOME/.nvm/nvm.sh" &&`, ca `node` și `npm` să fie găsite.
 - **`npm install -g` dă eroarea EACCES (permisiune refuzată)** pe un Node instalat în sistem. Nu folosești sudo. Propui instalarea lui Node prin nvm, care pune totul în folderul utilizatorului.
 
@@ -159,7 +160,7 @@ node <wizard-data-dashboard>/scripts/build.js <wizard-data-dashboard>/examples/d
 node <wizard-data-dashboard>/scripts/check.js <temp>/wizard-data-dashboard-test.html <temp>/wizard-data-dashboard-test-shots
 ```
 
-`<wizard-data-dashboard>` este folderul `wizard-data-dashboard` de lângă acest skill (`../wizard-data-dashboard`). Testul are nevoie de internet, pentru că graficele își descarcă „vopselele” (bibliotecile de desen) de pe internet.
+`<wizard-data-dashboard>` este folderul `wizard-data-dashboard` de lângă acest skill: `${CLAUDE_SKILL_DIR}/../wizard-data-dashboard`. Testul are nevoie de internet, pentru că graficele își descarcă „vopselele” (bibliotecile de desen) de pe internet.
 
 Înainte de test spui: „Acum gătim o mâncare de probă, ca să vedem că bucătăria merge. Fac un raport cu date de exemplu, iar degustătorul îl verifică.”
 
@@ -175,5 +176,5 @@ node <wizard-data-dashboard>/scripts/check.js <temp>/wizard-data-dashboard-test.
 
 Dacă omul întreabă cum dezinstalează:
 - **Node.js:** prin dezinstalarea obișnuită a sistemului (Windows: Setări → Aplicații); pe Mac sau Linux cu nvm: `nvm uninstall <versiune>`.
-- **Playwright:** `npm uninstall -g playwright`, apoi ștergi folderul browserului: `~/.cache/ms-playwright`, sau `%LOCALAPPDATA%\ms-playwright` pe Windows.
-- **Bibliotecile Python:** `pip uninstall pandas openpyxl pdfplumber python-docx`.
+- **Playwright:** `npm uninstall -g playwright`, apoi ștergi folderul browserului: `~/.cache/ms-playwright` pe Linux, `~/Library/Caches/ms-playwright` pe Mac sau `%LOCALAPPDATA%\ms-playwright` pe Windows.
+- **Bibliotecile Python:** `pip uninstall pandas openpyxl xlrd pdfplumber python-docx`.

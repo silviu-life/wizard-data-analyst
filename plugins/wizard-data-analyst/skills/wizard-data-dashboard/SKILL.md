@@ -10,6 +10,8 @@ You don't write HTML for this skill. `template/Dashboard.html` is a finished ren
 
 ## Files
 
+All paths below are relative to this skill's directory, `${CLAUDE_SKILL_DIR}`. The user's working folder is different, so always run the scripts with the full path, e.g. `node ${CLAUDE_SKILL_DIR}/scripts/build.js ...`.
+
 - `template/Dashboard.html`: the renderer. **Never edit it.** If the template can't show something, change the JSON instead.
 - `template/dashboard.schema.json`: the JSON structure, with a description on every property.
 - `template/validate.js`: the validator. `node template/validate.js dashboard.json template/dashboard.schema.json`
@@ -23,7 +25,7 @@ You don't write HTML for this skill. `template/Dashboard.html` is a finished ren
 
 ## Step 0: arguments and depth
 
-First check that `node -v` works. If it doesn't, stop and suggest `/wizard-data-install` (it installs Node.js, Playwright and Python for beginners), then continue once it's done.
+First check that `node -v` works and reports v22 or newer. If it doesn't, stop and suggest `/wizard-data-install` (it installs Node.js, Playwright and Python for beginners), then continue once it's done.
 
 The skill takes a depth and a data folder, or only the data folder: `/wizard-data-dashboard [depth] <data folder>`.
 
@@ -72,8 +74,8 @@ Follow steps 1–8 below yourself, without subagents. Keep the plan short (sourc
 4. Spot-check the headline numbers yourself against the datasets. Then write `<work>/skeleton.json` (everything except `datasets`), run `scripts/assemble.js`, and do steps 6–8.
 
 ### Aprofundată: Claude Code workflow
-Call the `Workflow` tool with `scriptPath: "<this skill dir>/workflows/deep-analysis.js"` and pass `args` as a JSON object (not a string):
-`{ "skill": "<absolute skill dir>", "data": "<data dir or files>", "work": "<absolute path of analize/<slug>>", "language": "<user language>", "today": "YYYY-MM-DD" }`.
+Call the `Workflow` tool with `scriptPath: "${CLAUDE_SKILL_DIR}/workflows/deep-analysis.js"` and pass `args` as a JSON object (not a string):
+`{ "skill": "${CLAUDE_SKILL_DIR}", "data": "<data dir or files>", "work": "<absolute path of analize/<slug>>", "language": "<user language>", "today": "YYYY-MM-DD" }`.
 The workflow runs four phases:
 1. A planner inventories all data and writes the plan, including the dashboard layout and up to 6 tasks.
 2. One agent per task cleans its sources, builds its datasets and analyses its area.
@@ -86,7 +88,7 @@ When it finishes, check that `dashboard.valid` and `dashboard.checked` are true.
 
 These are the steps every depth goes through; the depth decides who does them. At Standard and Deep, steps 2–4 belong to the task owners.
 
-1. **Collect the data.** Ask where the files are if the user hasn't said. Accept CSV, JSON, XLSX (convert to CSV first) or pasted tables. Note each file's grain, e.g. "one row per order", "one row per campaign per day".
+1. **Collect the data.** Ask where the files are if the user hasn't said. Accept CSV, JSON, Excel (.xlsx, and old .xls via pandas + xlrd; convert both to CSV first), PDF with a text layer (extract with pdfplumber in a script, not by reading pages one by one), Word .docx (python-docx), .eml, .md, XML (parse with a script) or pasted tables. A scanned PDF has no text layer: tell the user and ask for an Excel/CSV export of the same data instead. Note each file's grain, e.g. "one row per order", "one row per campaign per day".
 2. **Profile each source.** Run `scripts/profile.js` on it. For every column decide: field name (snake_case), field type, and whether it's a dimension (filter or split candidate) or a measure. Flag dirty values: currency strings, mixed date formats, country names that need ISO numeric codes, `%` strings that must become fractions.
 3. **Model datasets.** Clean and reshape with a script you write (Node or Python). Output one dataset per grain with raw rows. Rules:
    - Use one name for one concept across datasets (`channel`, `region`, `date`). Filters join on the name.
