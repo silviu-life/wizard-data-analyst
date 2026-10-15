@@ -1,0 +1,15 @@
+{
+  "name": "wizard-data-analyst",
+  "description": "Pluginurile Wizard pentru analiza datelor de business.",
+  "owner": {
+    "name": "Silviu",
+    "url": "https://github.com/silviu-life"
+  },
+  "plugins": [
+    {
+      "name": "wizard-data-analyst",
+      "source": "./plugins/wizard-data-analyst",
+      "description": "Analiză de date pentru firme: dai un folder cu Excel-uri, CSV-uri, PDF-uri și exporturi, primești un dashboard interactiv într-un singur fișier HTML, cu grafice, filtre și concluzii."
+    }
+  ]
+}

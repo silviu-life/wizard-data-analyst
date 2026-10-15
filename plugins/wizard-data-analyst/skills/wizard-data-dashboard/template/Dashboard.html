@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<script src="validate.js"></script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#F4F0EA;color:#1F1B16;font-family:'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+a{color:#8B6A4A;text-decoration:none}
+a:hover{color:#1F1B16}
+button,input,select{font:inherit}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:#F8F5F0;border-right:1px solid #E6DFD3;padding:28px 16px;display:flex;flex-direction:column;gap:32px}
+.brand{display:flex;align-items:center;gap:12px;padding:0 8px}
+.mark{width:38px;height:38px;border-radius:10px;background:#1F1B16;color:#F8F5F0;display:flex;align-items:center;justify-content:center;font-family:'Bodoni Moda',serif;font-size:20px;font-weight:600;flex-shrink:0}
+.brand-n{font-weight:600;font-size:15px}
+.brand-s{font-size:12px;color:#7A7166;margin-top:1px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{padding:10px 12px;border-radius:10px;font-size:14px;color:#6F665B}
+.nav a:hover{background:#F0EBE3;color:#1F1B16}
+.nav a.on{background:#ECE5DA;color:#1F1B16;font-weight:600}
+.src{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 8px}
+.src-t{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#7A7166;font-weight:600}
+.src-r{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.src-r span:last-child{color:#7A7166}
+.src-f{font-size:12px;line-height:1.5;color:#7A7166;border-top:1px solid #E6DFD3;padding-top:12px}
+.main{padding:32px 36px 56px;display:flex;flex-direction:column;gap:18px;min-width:0;width:100%;max-width:1480px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.head h1{font-family:'Bodoni Moda',serif;font-size:40px;font-weight:500;line-height:1;margin:0}
+.head-s{font-size:14px;color:#6F665B;margin-top:8px}
+.head-r{display:flex;gap:14px;align-items:center}
+.updated{font-size:13px;color:#7A7166}
+.btn{all:unset;padding:10px 18px;border-radius:10px;background:#1F1B16;color:#FFFDFA;font-size:13px;font-weight:600;cursor:pointer;text-align:center}
+.btn:hover{background:#3A332B}
+.btn.ghost{background:transparent;color:#1F1B16;border:1px solid #E3DBCF;padding:9px 17px}
+.btn.ghost:hover{background:#F4EFE7}
+/* filter bar */
+.filters{display:flex;flex-direction:column;gap:10px;padding:10px 12px;background:#FFFDFA;border:1px solid #E9E2D7;border-radius:14px}
+.frow{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.fdiv{width:1px;height:24px;background:#E6DFD3}
+@media (max-width:1400px){.fdiv{display:none}}
+.fsp{flex:1}
+.seg{display:flex;gap:2px;padding:3px;background:#EFE9E0;border-radius:10px}
+.seg button{all:unset;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;color:#6F665B;cursor:pointer;white-space:nowrap}
+.seg button:hover{color:#1F1B16}
+.seg button.on{background:#FFFFFF;color:#1F1B16;box-shadow:0 1px 2px rgba(31,27,22,.14)}
+.dates{display:flex;align-items:center;gap:6px;font-size:13px;color:#6F665B}
+.dates input,.txt{border:1px solid #E3DBCF;border-radius:10px;padding:6px 10px;font-size:13px;color:#1F1B16;background:#FFFFFF;outline:none}
+.dates input:focus,.txt:focus{border-color:#8B6A4A}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{all:unset;display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #ECE5DA;color:#7A7166;white-space:nowrap}
+.chip:hover{color:#1F1B16}
+.chip.on{background:#F1EBE1;border-color:#D9CDBB;color:#1F1B16}
+.chip i{width:9px;height:9px;border-radius:50%;border:1.5px solid;box-sizing:border-box}
+.sel{position:relative;display:flex;align-items:center}
+.sel select{appearance:none;font-size:13px;font-weight:500;color:#1F1B16;background:#FFFFFF;border:1px solid #E3DBCF;border-radius:10px;padding:7px 30px 7px 12px;cursor:pointer;max-width:240px}
+.sel::after{content:'▼';position:absolute;right:12px;font-size:9px;color:#6F665B;pointer-events:none}
+.sw{all:unset;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;color:#1F1B16;cursor:pointer;white-space:nowrap}
+.sw-t{width:32px;height:18px;border-radius:9px;background:#DDD3C4;position:relative;transition:background .15s;flex-shrink:0}
+.sw-t::after{content:'';position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 2px rgba(31,27,22,.25);transition:transform .15s}
+.sw.on .sw-t{background:#1F1B16}
+.sw.on .sw-t::after{transform:translateX(14px)}
+.adv{all:unset;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:10px;border:1px solid #E3DBCF;font-size:13px;font-weight:600;cursor:pointer;color:#1F1B16;background:#FFFFFF}
+.adv:hover{border-color:#CDBFAC}
+.adv svg{width:14px;height:14px}
+.adv b{min-width:18px;height:18px;border-radius:9px;background:#1F1B16;color:#FFFDFA;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.reset{all:unset;font-size:13px;color:#8B6A4A;font-weight:600;cursor:pointer;padding:6px 4px}
+.reset:hover{color:#1F1B16}
+.active{display:flex;flex-wrap:wrap;gap:6px;padding-top:10px;border-top:1px solid #F0EAE1}
+.ac{display:flex;align-items:center;gap:4px;padding:4px 4px 4px 11px;border-radius:999px;background:#F1EBE1;font-size:12.5px;color:#1F1B16;white-space:nowrap}
+.ac span{color:#7A7166}
+.ac em{font-style:normal;font-size:11px;color:#8B6A4A;font-weight:600;margin-left:2px}
+.ac button{all:unset;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6F665B;font-size:14px;line-height:1}
+.ac button:hover{background:#E3D9CA;color:#1F1B16}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(31,27,22,.18);z-index:30}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:100vw;background:#FFFDFA;border-left:1px solid #E6DFD3;box-shadow:-12px 0 40px rgba(31,27,22,.12);z-index:31;display:flex;flex-direction:column}
+.dr-h{display:flex;justify-content:space-between;align-items:center;padding:22px 24px 18px;border-bottom:1px solid #EFE9E0}
+.dr-h div{font-family:'Bodoni Moda',serif;font-size:24px;font-weight:500}
+.dr-x{all:unset;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:#6F665B}
+.dr-x:hover{background:#F4EFE7;color:#1F1B16}
+.dr-b{flex:1;overflow-y:auto;padding:8px 24px 24px;display:flex;flex-direction:column}
+.dr-sec{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#7A7166;font-weight:600;padding:20px 0 4px}
+.dr-f{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-bottom:1px solid #F2EDE5}
+.dr-f:last-child{border-bottom:0}
+.dr-f .sel select{width:100%;max-width:none}
+.dr-l{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:600}
+.dr-l button{all:unset;font-size:12px;color:#8B6A4A;font-weight:600;cursor:pointer}
+.dr-l button:hover{color:#1F1B16}
+.dr-ft{display:flex;gap:10px;padding:16px 24px;border-top:1px solid #EFE9E0}
+.dr-ft .btn{flex:1}
+.sm-list{max-height:200px;overflow-y:auto;border:1px solid #EFE9E0;border-radius:10px;padding:4px}
+.sm-o{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:7px;font-size:13.5px;cursor:pointer}
+.sm-o:hover{background:#F6F1EA}
+.sm-o input{accent-color:#1F1B16;margin:0}
+.sm-n{font-size:12px;color:#7A7166}
+.rg{position:relative;height:22px}
+.rg input{position:absolute;inset:0;width:100%;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.rg input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:18px;height:18px;border-radius:50%;background:#FFFFFF;border:2px solid #1F1B16;cursor:pointer}
+.rg input::-moz-range-thumb{pointer-events:auto;width:14px;height:14px;border-radius:50%;background:#FFFFFF;border:2px solid #1F1B16;cursor:pointer}
+.rg-t{position:absolute;left:9px;right:9px;top:9px;height:4px;border-radius:2px;background:#EFE9E0}
+.rg-f{position:absolute;top:0;bottom:0;background:#8B6A4A;border-radius:2px}
+.rg-v{display:flex;justify-content:space-between;font-size:13px;color:#5E564C}
+/* grid + cards */
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+@media (max-width:1100px){.grid>*{grid-column:1 / -1 !important}}
+@media (max-width:760px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.main{padding:24px 18px 48px}}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.kpi{background:#FFFDFA;border:1px solid #E9E2D7;border-radius:16px;padding:20px 20px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi-l{font-size:13px;color:#6F665B;font-weight:500}
+.kpi-v{font-size:30px;font-weight:600;letter-spacing:-.02em}
+.kpi-d{display:flex;gap:6px;font-size:13px;flex-wrap:wrap}
+.kpi-d b{font-weight:600}
+.kpi-d span{color:#7A7166}
+.kpi svg{width:100%;height:44px;margin-top:8px;overflow:visible;display:block}
+.card{background:#FFFDFA;border:1px solid #E9E2D7;border-radius:16px;padding:22px 24px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.card-h{display:flex;justify-content:space-between;gap:12px 16px;align-items:flex-start;flex-wrap:wrap}
+.card-t{font-size:16px;font-weight:600}
+.card-d{font-size:13px;color:#7A7166;margin-top:5px;line-height:1.45}
+.card-d:empty{display:none}
+.ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.split{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#7A7166;font-weight:500}
+.split .sel select{padding:5px 28px 5px 10px;font-size:12.5px;font-weight:600}
+.body{position:relative;min-width:0}
+.body.bleed{margin:0 -24px -12px}
+.empty{font-size:14px;color:#7A7166;padding:24px 0}
+.bleed .empty{padding:24px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:#6F665B;margin-bottom:12px;align-items:center}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.legend .ln{display:inline-block;width:18px;border-top:2px solid #1F1B16;margin-right:8px;vertical-align:middle}
+.legend .ln.dash{border-top-style:dashed;border-color:#B9AD9C}
+.legend .lk{cursor:pointer}
+.legend .lk:hover{color:#1F1B16}
+.legend .lx{margin-left:auto;color:#7A7166}
+.lt{display:flex;align-items:baseline;gap:10px;margin:-6px 0 12px;flex-wrap:wrap}
+.lt-v{font-size:26px;font-weight:600;letter-spacing:-.01em}
+.lt-d{font-size:13px;font-weight:600}
+.lt-s{font-size:13px;color:#7A7166}
+svg text{font-family:'Hanken Grotesk',sans-serif}
+.ax{font-size:12px;fill:#7A7166}
+.ax.lk{cursor:pointer}
+.ax.lk:hover{fill:#1F1B16}
+.donut{position:relative;width:196px;height:196px;margin:0 auto 22px}
+.donut-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none}
+.donut-c span{font-size:12px;color:#7A7166}
+.donut-c b{font-size:24px;font-weight:600}
+.dl{display:flex;flex-direction:column;gap:4px}
+.dl-r{display:grid;grid-template-columns:10px minmax(0,1fr) auto 72px;gap:10px;align-items:center;font-size:14px;padding:4px 6px;margin:0 -6px;border-radius:7px;cursor:pointer}
+.dl-r:hover{background:#F6F1EA}
+.dl-r i{width:10px;height:10px;border-radius:50%}
+.dl-r .p{color:#7A7166}
+.dl-r .v{text-align:right;font-weight:600}
+.tbl-r{display:grid;gap:12px;padding:11px 24px;border-bottom:1px solid #F2EDE5;font-size:14px;align-items:center}
+.tbl-r.ck{cursor:pointer}
+.tbl-r:hover{background:#FAF6F0}
+.tbl-h{padding:10px 24px;border-top:1px solid #EFE9E0;border-bottom:1px solid #EFE9E0;font-size:12px;font-weight:600;background:#FAF7F2;color:#7A7166}
+.tbl-h:hover{background:#FAF7F2}
+.tbl-h div{cursor:pointer;user-select:none}
+.tbl-h div:hover,.tbl-h div.on{color:#1F1B16}
+.tbl-n{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl-s{font-size:12px;color:#7A7166;margin-top:2px}
+.tbl-dot{display:flex;align-items:center;gap:8px}
+.tbl-dot i{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.r{text-align:right;justify-content:flex-end}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+.rk{display:flex;flex-direction:column;gap:8px}
+.rk>div{padding:5px 6px;margin:0 -6px;border-radius:8px;cursor:pointer}
+.rk>div:hover{background:#F6F1EA}
+.rk-t{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;gap:10px}
+.rk-t div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk-t div:last-child{display:flex;gap:10px;align-items:baseline}
+.rk-t small{font-size:12px;font-weight:600}
+.rk-t b{font-weight:600}
+.rk-b{height:6px;border-radius:3px;background:#F1EBE1;overflow:hidden;margin-top:8px}
+.rk-b i{display:block;height:100%;background:#8B6A4A;border-radius:3px}
+.fn{display:flex;flex-direction:column;gap:6px}
+.fn-rate{font-size:12px;color:#8B6A4A;font-weight:600;padding:2px 2px 0}
+.fn-step{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px;border-radius:10px;background:#F6F1EA}
+.fn-step span{font-size:14px;color:#5E564C}
+.fn-step b{font-size:20px;font-weight:600}
+.map{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:32px;height:100%}
+@media (max-width:1000px){.map{grid-template-columns:1fr;height:auto}.map-l{height:380px}.body:has(.map){height:auto !important}.map-r{border-left:0;padding-left:0}}
+.map-l{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.map-svg{flex:1;min-height:0;position:relative}
+.mlg{display:flex;align-items:flex-start;gap:16px;font-size:12px;color:#7A7166;flex-wrap:wrap}
+.mlg-s{display:flex;align-items:flex-start}
+.mlg-i{display:flex;flex-direction:column;gap:5px;width:58px}
+.mlg-b{height:10px}
+.mlg-i:first-child .mlg-b{border-radius:4px 0 0 4px}
+.mlg-i:last-of-type .mlg-b{border-radius:0 4px 4px 0}
+.mlg-max{padding-top:15px;margin-left:-4px}
+.map-r{display:flex;flex-direction:column;gap:6px;border-left:1px solid #EFE9E0;padding-left:28px;min-width:0}
+.side-k{font-size:13px;color:#7A7166}
+.side-v{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.side-s{font-size:13px;color:#7A7166;margin-bottom:10px}
+.lr{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;gap:5px 10px;align-items:baseline;padding:6px 8px;margin:0 -8px;border-radius:8px;cursor:pointer}
+.lr:hover,.lr.on{background:#F6F1EA}
+.lr-n{font-size:12px;color:#7A7166}
+.lr-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lr-p{font-size:12px;color:#7A7166}
+.lr-v{font-size:14px;font-weight:600;text-align:right}
+.lr-bar{grid-column:2 / 5;height:4px;background:#F1EBE1;border-radius:2px;overflow:hidden}
+.lr-bar i{display:block;height:100%;border-radius:2px}
+.bullets{display:flex;flex-direction:column;justify-content:space-between;height:100%;gap:10px}
+.bl-top{display:flex;justify-content:space-between;align-items:baseline}
+.bl-l{font-size:14px;color:#5E564C}
+.bl-v{font-size:20px;font-weight:600}
+.bl-track{position:relative;height:22px;margin:8px 0 7px;background:#F4EFE7;border-radius:5px}
+.bl-band{position:absolute;left:0;top:0;bottom:0;background:#E9E0D2;border-radius:5px 0 0 5px}
+.bl-fill{position:absolute;left:0;top:7px;height:8px;background:#1F1B16;border-radius:4px}
+.bl-tgt{position:absolute;top:-3px;width:3px;height:28px;background:#8B6A4A;margin-left:-1.5px;border-radius:2px}
+.bl-sub{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:#7A7166}
+.coh{display:flex;flex-direction:column;height:100%;gap:3px}
+.coh-r{display:grid;gap:3px;flex:1;font-size:13px}
+.coh-r>div{display:flex;align-items:center}
+.coh-h{flex:0 0 26px;font-size:12px;color:#7A7166;font-weight:600}
+.coh .num{justify-content:flex-end;padding-right:12px}
+.coh-c{justify-content:center;border-radius:5px;font-weight:600;font-size:12.5px;cursor:default}
+.coh-c.empty-c{background:#F8F5F0}
+.coh-h .coh-m{justify-content:center}
+.err{font-size:13px;color:#B0513B;padding:12px 0;line-height:1.5}
+/* invalid config */
+.inv{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:64px 24px}
+.inv-c{width:100%;max-width:820px;background:#FFFDFA;border:1px solid #E9E2D7;border-radius:16px;padding:32px 36px;display:flex;flex-direction:column;gap:14px}
+.inv-t{font-family:'Bodoni Moda',serif;font-size:32px;font-weight:500}
+.inv-s{font-size:14px;color:#5E564C;line-height:1.55}
+.inv code,.inv-c code{font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F1EBE1;color:#7A5C3E;padding:2px 6px;border-radius:5px}
+.inv ol{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;border-top:1px solid #EFE9E0}
+.inv li{display:flex;flex-direction:column;gap:5px;padding:12px 0;border-bottom:1px solid #F2EDE5;font-size:14px}
+.inv li code{align-self:flex-start;word-break:break-all}
+#tip{position:fixed;left:0;top:0;pointer-events:none;background:#1F1B16;color:#FFFDFA;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.5;opacity:0;transition:opacity .08s;z-index:40;white-space:nowrap}
+#tip .t{color:#CFC5B6;font-size:12px}
+#tip .h{color:#C4A47E;font-size:11.5px;margin-top:3px}
+#tip b{font-size:15px;font-weight:600}
+#tip .tr{display:flex;align-items:center;gap:8px}
+#tip .tr i{width:8px;height:8px;border-radius:2px}
+#tip .tr span{margin-left:auto;padding-left:18px;font-weight:600}
+#tip .tt{border-top:1px solid #3A332B;margin-top:5px;padding-top:5px}
+@media print{.side,.filters,.head-r,.split{display:none}.app{display:block}.card,.kpi{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="app" id="root">
+  <aside class="side">
+    <div class="brand"><div class="mark" data-bind="brand.mark"></div><div><div class="brand-n" data-bind="brand.name"></div><div class="brand-s" data-bind="brand.subtitle"></div></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="src" id="sources"></div>
+  </aside>
+  <main class="main">
+    <div class="head">
+      <div><h1 id="tabTitle"></h1><div class="head-s" id="tabSub"></div></div>
+      <div class="head-r"><div class="updated" data-bind="meta.updated"></div></div>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </main>
+</div>
+<div id="tip"></div>
+<script>
+/* Renders the whole page from one JSON document (see dashboard.schema.json, DASHBOARD_GUIDE.md).
+   Source: <script type="application/json" id="dashboard-data"> if present, else ?data=<url>, else dashboard.json.
+   The document is validated first; if it has problems, the page lists them and renders nothing else. */
+const INK = '#1F1B16', GOOD = '#4C7A53', BAD = '#B0513B', MUTED = '#7A7166', GRID = '#EAE3D8', CARD = '#FFFDFA', SAND = '#DCCAB0', BROWN = '#8B6A4A';
+const SEQ = d3.interpolateRgbBasis(['#F4EDE2', '#E2D0B5', '#C4A47E', '#8B6A4A', '#4A3828', '#1F1B16']);
+const TONES = {good: ['#E6EEE1', '#3E6845'], neutral: ['#F0E8DC', '#7A5C3E'], bad: ['#F6E2DA', '#9C4631']};
+const NUMERIC = new Set(['number', 'currency', 'percent', 'duration']);
+const DEFAULT_LABELS = {vsPrevious: 'vs previous {n} days', thisPeriod: 'This period', previousPeriod: 'Previous period', previousShort: 'Prev.', total: 'Total', reset: 'Reset', empty: 'No data matches these filters.', target: 'Target {value}', ofTarget: '{pct} of target', lowerIsBetter: 'lower is better', less: 'Less', more: 'More', fewer: 'Fewer', noData: 'No data', bubbleSize: 'Bubble size = {measure}', ofTotal: '{pct} of total', rank: 'rank {n}', bestDay: 'Best day: {date} · {value}', busiest: 'Busiest: {cell} · {value}', countries: '{n} countries · top {top} shown', perCountry: '{measure} per country', totalOf: 'Total {measure}', weekOf: 'Week of {date}', retained: '{pct} retained · {count} customers', cohortCell: '{cohort} cohort, month {n}', advanced: 'Advanced filters', allTabs: 'All tabs', thisTab: 'This tab · {tab}', clearAll: 'Clear all', done: 'Done', compare: 'Compare', custom: 'Custom', from: 'From', to: 'To', splitBy: 'Split by', none: 'None', all: 'All', any: 'Any', searchValues: 'Search {label}', selectedCount: '{n} selected', clear: 'Clear', clickToFilter: 'Click to filter', fromChart: 'From chart', removeFilter: 'Remove filter', yes: 'Yes', no: 'No'};
+let D, S, F, TIME, FIELDS = {}, AF = [], MOUNTS = [], MS = {}, ASOF, MINDAY;
+const cache = new Map();
+
+/* ---------- utilities ---------- */
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const L = k => D.labels?.[k] ?? DEFAULT_LABELS[k] ?? k;
+const tpl = (s, ctx = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? '');
+const DAY0 = Date.UTC(1970, 0, 1);
+const dayOf = s => { const [y, m, d] = String(s).slice(0, 10).split('-').map(Number); return Math.round((Date.UTC(y, m - 1, d) - DAY0) / 864e5); };
+const dateOf = n => { const d = new Date(DAY0 + n * 864e5); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); };
+const isoOf = n => { const d = dateOf(n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const onDark = c => d3.hsl(c).l < 0.52;
+const rrTop = (x, y, w, h, r) => { h = Math.max(0, h); r = Math.min(r, w / 2, h); return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; };
+const change = (c, p) => p ? (c - p) / p : 0;
+const fD = x => (x >= 0 ? '+' : '−') + F.percent1(Math.abs(x));
+const fLabel = f => FIELDS[f]?.label || f;
+const valLabel = (field, v) => { const g = FIELDS[field]; if (g?.labelOf?.has(v)) return g.labelOf.get(v); if (typeof v === 'boolean') return L(v ? 'yes' : 'no'); return v; };
+const hint = () => `<div class="h">${esc(L('clickToFilter'))}</div>`;
+function color(field, value, i = 0) {
+  const fixed = D.theme?.colors?.[field]?.[value]; if (fixed) return fixed;
+  const pal = D.theme?.categorical || ['#1F1B16', '#8B6A4A', '#C29F76', '#DCCAB0', '#A69D91', '#5E4835'];
+  const idx = FIELDS[field]?.options?.indexOf(value);
+  return pal[(idx >= 0 ? idx : i) % pal.length];
+}
+
+function makeFormats() {
+  const loc = D.locale || 'en-US', cur = D.currency || 'USD', nf = o => new Intl.NumberFormat(loc, o);
+  const cC = nf({style: 'currency', currency: cur, notation: 'compact', maximumFractionDigits: 1}), cF = nf({style: 'currency', currency: cur, maximumFractionDigits: 0}), c2 = nf({style: 'currency', currency: cur, minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const i0 = nf({maximumFractionDigits: 0}), nC = nf({notation: 'compact', maximumFractionDigits: 1});
+  const p = d => nf({style: 'percent', minimumFractionDigits: d, maximumFractionDigits: d}), p0 = p(0), p1 = p(1), p2 = p(2);
+  const r1 = nf({minimumFractionDigits: 1, maximumFractionDigits: 1}), r2 = nf({minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const dt = o => new Intl.DateTimeFormat(loc, o);
+  const dur = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}h ${m}m` : m ? `${m}m ${String(x).padStart(2, '0')}s` : `${x}s`; };
+  F = {
+    currency: v => cC.format(v), currencyFull: v => cF.format(v), currency2: v => c2.format(v),
+    integer: v => i0.format(v), number: v => nC.format(v), numberFull: v => i0.format(v),
+    percent: v => p0.format(v), percent1: v => p1.format(v), percent2: v => p2.format(v),
+    ratio: v => r1.format(v) + '×', ratio2: v => r2.format(v) + '×', duration: dur,
+    day: dt({month: 'short', day: 'numeric'}), dayLong: dt({weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'}), month: dt({month: 'short'}), monthYear: dt({month: 'short', year: '2-digit'}),
+    span: dt({month: 'short', day: 'numeric', year: 'numeric'}), hour: dt({hour: 'numeric'}), weekday: dt({weekday: 'short'})
+  };
+}
+const TYPE_FMT = {currency: 'currency', percent: 'percent1', duration: 'duration', number: 'number'};
+const fmtOf = (mid, full) => { const m = D.measures[mid]; const f = m?.format || TYPE_FMT[FIELDS[m?.field]?.type] || 'number'; return (full && F[f + 'Full']) || F[f] || F.number; };
+const fieldFmt = field => F[TYPE_FMT[FIELDS[field]?.type]] || F.number;
+const mLabel = mid => D.measures[mid]?.label || mid;
+const dcol = (dx, mid) => { const b = D.measures[mid]?.better || 'up'; return b === 'neutral' ? MUTED : (dx >= 0) === (b === 'up') ? GOOD : BAD; };
+const hourLabel = h => F.hour.format(new Date(2026, 0, 1, h % 24));
+
+/* ---------- data layer ---------- */
+function prep() {
+  TIME = D.time || null;
+  for (const [id, ds] of Object.entries(D.datasets)) {
+    ds.names = ds.fields.map(f => f.name); ds.fieldSet = new Set(ds.names);
+    ds.objects = ds.rows.map(r => { const o = {}; ds.names.forEach((c, i) => o[c] = r[i]); return o; });
+    ds.fields.forEach(f => {
+      const g = FIELDS[f.name] || (FIELDS[f.name] = {name: f.name, type: f.type, label: f.label || f.name, datasets: []});
+      g.datasets.push(id); if (!g.values && f.values) g.values = f.values; if (!g.labelField && f.labelField) g.labelField = f.labelField;
+      if (f.label && g.label === f.name) g.label = f.label;
+    });
+  }
+  let maxDay = -Infinity, minDay = Infinity;
+  if (TIME) for (const ds of Object.values(D.datasets)) if (ds.fieldSet.has(TIME.field)) ds.objects.forEach(o => { o._d = dayOf(o[TIME.field]); if (o._d > maxDay) maxDay = o._d; if (o._d < minDay) minDay = o._d; });
+  ASOF = TIME?.asOf ? dayOf(TIME.asOf) : maxDay; MINDAY = minDay;
+  for (const g of Object.values(FIELDS)) {
+    const all = g.datasets.flatMap(id => D.datasets[id].objects);
+    if (NUMERIC.has(g.type)) { const v = all.map(o => o[g.name]).filter(x => typeof x === 'number'); g.min = d3.min(v); g.max = d3.max(v); g.options = []; }
+    else if (g.type === 'date' || g.type === 'datetime') { const v = all.map(o => dayOf(o[g.name])); g.min = d3.min(v); g.max = d3.max(v); g.options = []; }
+    else if (g.type === 'boolean') g.options = [true, false];
+    else if (g.values) g.options = g.values;
+    else g.options = [...new Set(all.map(o => o[g.name]).filter(x => x != null))].sort((a, b) => String(valLabel(g.name, a)).localeCompare(String(valLabel(g.name, b))));
+    if (g.labelField) { g.labelOf = new Map(); all.forEach(o => g.labelOf.set(o[g.name], o[g.labelField])); if (!g.values) g.options.sort((a, b) => String(g.labelOf.get(a)).localeCompare(String(g.labelOf.get(b)))); }
+  }
+}
+const timeOn = () => !!TIME;
+function bounds(period) {
+  if (!TIME) return [-Infinity, Infinity];
+  let a, b;
+  if (S.time.custom) [a, b] = S.time.custom; else { b = ASOF; a = ASOF - S.time.days + 1; }
+  const n = b - a + 1;
+  return period === 'previous' ? [a - n, a - 1] : [a, b];
+}
+const days = () => { const [a, b] = bounds('current'); return b - a + 1; };
+const compareOn = () => TIME && TIME.compare !== 'hidden' && S.compare;
+
+function isActive(f, v) {
+  if (v == null) return false;
+  switch (f.control) {
+    case 'chips': return v.length > 0 && v.length < f.def.options.length;
+    case 'search-multi': return v.length > 0;
+    case 'dropdown': return true;
+    case 'range': return v[0] > f.def.min || v[1] < f.def.max;
+    case 'toggle': return v === true;
+    case 'search': return String(v).trim() !== '';
+    case 'date-range': return v[0] != null || v[1] != null;
+  }
+  return false;
+}
+function test(f, v, x) {
+  switch (f.control) {
+    case 'chips': case 'search-multi': return v.includes(x);
+    case 'dropdown': return x === v;
+    case 'range': return x >= v[0] && x <= v[1];
+    case 'toggle': return x === true;
+    case 'search': return String(x ?? '').toLowerCase().includes(String(v).trim().toLowerCase());
+    case 'date-range': { const d = dayOf(x); return (v[0] == null || d >= dayOf(v[0])) && (v[1] == null || d <= dayOf(v[1])); }
+  }
+  return true;
+}
+const adhoc = () => S.adhoc[S.tab] || (S.adhoc[S.tab] = {});
+function rowsFor(m, period = 'current') {
+  const ds = D.datasets[m.dataset]; if (!ds) return [];
+  const ign = m.ignoreFilters || [], dated = TIME && ds.fieldSet.has(TIME.field) && !ign.includes('time');
+  if (period === 'previous' && !dated) return [];
+  const key = [m.dataset, period, JSON.stringify(S.time), JSON.stringify(S.f), JSON.stringify(adhoc()), S.tab, ign.join(), JSON.stringify(m.where || null)].join('|');
+  if (cache.has(key)) return cache.get(key);
+  let rows = ds.objects;
+  if (dated) { const [a, b] = bounds(period); rows = rows.filter(r => r._d >= a && r._d <= b); }
+  for (const f of AF) {
+    if (!ds.fieldSet.has(f.field) || ign.includes(f.field)) continue;
+    const v = S.f[f.field]; if (!isActive(f, v)) continue;
+    rows = rows.filter(r => test(f, v, r[f.field]));
+  }
+  for (const [k, vals] of Object.entries(adhoc())) if (ds.fieldSet.has(k) && !ign.includes(k)) rows = rows.filter(r => vals.includes(r[k]));
+  for (const [k, c] of Object.entries(m.where || {})) { if (c.not) rows = rows.filter(r => !c.not.includes(r[k])); if (c.in) rows = rows.filter(r => c.in.includes(r[k])); }
+  cache.set(key, rows); return rows;
+}
+function agg(rows, mid) {
+  const m = D.measures[mid]; if (!m) return 0;
+  if (m.ratio) { const b = agg(rows, m.ratio[1]); return b ? agg(rows, m.ratio[0]) / b : 0; }
+  switch (m.agg) {
+    case 'count': return rows.length;
+    case 'distinct': return new Set(rows.map(r => r[m.field])).size;
+    case 'avg': return rows.length ? d3.mean(rows, r => r[m.field]) : 0;
+    case 'max': return rows.length ? d3.max(rows, r => r[m.field]) : 0;
+    case 'min': return rows.length ? d3.min(rows, r => r[m.field]) : 0;
+  }
+  return d3.sum(rows, r => r[m.field]);
+}
+function buckets(rows, period, size) {
+  const [a, b] = bounds(period), out = [];
+  for (let d = a; d <= b; d += size) out.push({d, rows: []});
+  rows.forEach(r => { const o = out[Math.floor((r._d - a) / size)]; if (o) o.rows.push(r); });
+  return out;
+}
+const bucketSize = m => m.bucket === 'week' || ((m.bucket || 'auto') === 'auto' && days() > 31) ? 7 : 1;
+const orderOf = (field, values) => { const o = FIELDS[field]?.options; return o?.length ? o.filter(x => values.includes(x)).concat(values.filter(x => !o.includes(x))) : values; };
+
+/* ---------- click to filter ---------- */
+function pick(field, value) {
+  const f = AF.find(x => x.field === field);
+  if (f && (f.control === 'chips' || f.control === 'search-multi')) { const c = S.f[field]; S.f[field] = c && c.length === 1 && c[0] === value ? undefined : [value]; }
+  else if (f && f.control === 'dropdown') S.f[field] = S.f[field] === value ? undefined : value;
+  else { const a = adhoc(); if (a[field]?.length === 1 && a[field][0] === value) delete a[field]; else a[field] = [value]; }
+  refresh();
+}
+const clickable = (sel, field, val) => sel.style('cursor', 'pointer').on('click', (e, d) => { tip.hide(); pick(field, val(d)); });
+
+/* ---------- tooltip + svg helpers ---------- */
+const tip = {
+  el: $('tip'),
+  show(html, e) { this.el.innerHTML = html; this.el.style.opacity = 1; this.move(e); },
+  move(e) { const r = this.el.getBoundingClientRect(); let x = e.clientX + 16; const y = e.clientY - r.height / 2; if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 16; this.el.style.transform = `translate(${x}px,${Math.max(8, Math.min(innerHeight - r.height - 8, y))}px)`; },
+  hide() { this.el.style.opacity = 0; }
+};
+const bindTip = (sel, html) => sel.on('mouseenter', (e, d) => tip.show(html(d), e)).on('mousemove', e => tip.move(e)).on('mouseleave', () => tip.hide());
+document.addEventListener('mouseover', e => { const t = e.target.closest?.('[data-tip]'); if (t) { const [a, b] = t.dataset.tip.split('|'); tip.show(`<div class="t">${a}</div><b>${b}</b>`, e); } });
+document.addEventListener('mousemove', e => { if (e.target.closest?.('[data-tip]')) tip.move(e); });
+document.addEventListener('mouseout', e => { if (e.target.closest?.('[data-tip]')) tip.hide(); });
+function legendRow(el, items, extra, field) {
+  const d = document.createElement('div'); d.className = 'legend';
+  d.innerHTML = items.map((i, j) => `<span${field && i.value !== undefined ? ` class="lk" data-j="${j}"` : ''}>${i.line ? `<span class="ln${i.dash ? ' dash' : ''}"></span>` : `<i style="background:${i.color}"></i>`}${esc(i.label)}</span>`).join('') + (extra ? `<span class="lx">${esc(extra)}</span>` : '');
+  if (field) d.querySelectorAll('.lk').forEach(s => s.onclick = () => pick(field, items[s.dataset.j].value));
+  el.appendChild(d); return d;
+}
+const seriesLegend = (el, field, keys, extra) => legendRow(el, keys.map(k => ({label: valLabel(field, k), color: color(field, k), value: k})), extra, field);
+function plot(el, fixedH) {
+  const used = [...el.children].reduce((a, c) => { const cs = getComputedStyle(c); return a + c.offsetHeight + (parseFloat(cs.marginBottom) || 0) + (parseFloat(cs.marginTop) || 0); }, 0);
+  const W = el.clientWidth, H = fixedH || Math.max(80, el.clientHeight - used);
+  return {W, H, svg: d3.select(el).append('svg').attr('width', W).attr('height', H).style('display', 'block').style('overflow', 'visible')};
+}
+function yAxis(svg, y, x0, x1, f, n = 4) {
+  const lo = y.domain()[0];
+  y.ticks(n).forEach(t => {
+    svg.append('line').attr('x1', x0).attr('x2', x1).attr('y1', y(t) + .5).attr('y2', y(t) + .5).attr('stroke', t === lo ? '#DDD3C4' : GRID).attr('stroke-dasharray', t === lo ? null : '3 4');
+    svg.append('text').attr('class', 'ax').attr('x', x0 - 10).attr('y', y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').text(f(t));
+  });
+}
+function dateTicks(svg, x, pts, H) {
+  const k = pts.length, cnt = Math.min(k, 6);
+  d3.range(cnt).forEach(j => { const i = Math.round(j * (k - 1) / Math.max(1, cnt - 1)); svg.append('text').attr('class', 'ax').attr('x', x(i)).attr('y', H - 6).attr('text-anchor', j === 0 ? 'start' : j === cnt - 1 ? 'end' : 'middle').text(F.day.format(dateOf(pts[i].d ?? pts[i]._d))); });
+}
+const emptyState = el => { el.innerHTML = `<div class="empty">${esc(L('empty'))}</div>`; };
+let world;
+const getWorld = () => world || (world = fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(r => r.json()));
+
+/* ---------- renderers (keyed by module type) ---------- */
+function kpi(el, m) {
+  const cur = rowsFor(m), prev = m.compare && compareOn() ? rowsFor(m, 'previous') : [], n = days();
+  el.innerHTML = m.measures.map(mid => {
+    const c = agg(cur, mid), p = prev.length ? agg(prev, mid) : null, dx = p ? change(c, p) : null;
+    let spark = '';
+    if (m.sparkline && TIME && cur.length) {
+      const size = n > 45 ? 3 : 1, v = buckets(cur, 'current', size).map(b => agg(b.rows, mid)), lo = d3.min(v), hi = d3.max(v), r = hi - lo || 1;
+      const ln = d3.line().x((_, i) => v.length > 1 ? i / (v.length - 1) * 200 : 100).y(x => 40 - (x - lo) / r * 34).curve(d3.curveMonotoneX)(v);
+      spark = `<svg viewBox="0 0 200 44" preserveAspectRatio="none"><path d="${ln} L200,44 L0,44 Z" fill="${BROWN}" fill-opacity=".08"></path><path d="${ln}" fill="none" stroke="${INK}" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path></svg>`;
+    }
+    return `<div class="kpi"><div class="kpi-l">${esc(mLabel(mid))}</div><div class="kpi-v">${fmtOf(mid, true)(c)}</div>${dx !== null ? `<div class="kpi-d"><b style="color:${dcol(dx, mid)}">${dx >= 0 ? '↑' : '↓'} ${fD(dx)}</b><span>${esc(tpl(L('vsPrevious'), {n}))}</span></div>` : ''}${spark}</div>`;
+  }).join('');
+}
+
+function line(el, m, ms) {
+  const mid = ms.measure, cur = rowsFor(m), split = ms.split, n = days();
+  if (!cur.length) return emptyState(el);
+  const prev = !split && m.compare && compareOn() ? rowsFor(m, 'previous') : [];
+  const size = bucketSize(m), f = fmtOf(mid), ff = fmtOf(mid, true);
+  const pts = rows => buckets(rows, 'current', size).map(b => ({d: b.d, v: agg(b.rows, mid)}));
+  let series;
+  if (split) {
+    const keys = d3.rollups(cur, v => agg(v, mid), r => r[split]).sort((a, b) => b[1] - a[1]).slice(0, 8).map(d => d[0]);
+    series = orderOf(split, keys).map(k => ({k, color: color(split, k), pts: pts(cur.filter(r => r[split] === k))}));
+  } else series = [{k: null, color: INK, pts: pts(cur)}];
+  const ps = prev.length ? buckets(prev, 'previous', size).map(b => ({d: b.d, v: agg(b.rows, mid)})) : null;
+  const c = agg(cur, mid), dx = ps ? change(c, agg(prev, mid)) : null;
+  const top = document.createElement('div'); top.className = 'lt';
+  top.innerHTML = `<div class="lt-v">${ff(c)}</div>` + (dx !== null ? `<div class="lt-d" style="color:${dcol(dx, mid)}">${fD(dx)}</div><div class="lt-s">${esc(tpl(L('vsPrevious'), {n}))}</div>` : '');
+  el.appendChild(top);
+  if (split) seriesLegend(el, split, series.map(s => s.k));
+  else legendRow(el, [{label: L('thisPeriod'), line: true}].concat(ps ? [{label: L('previousPeriod'), line: true, dash: true}] : []));
+  const {W, H, svg} = plot(el), mg = {t: 8, r: 8, b: 28, l: 56}, base = series[0].pts, k = base.length;
+  const x = d3.scaleLinear().domain([0, Math.max(1, k - 1)]).range([mg.l, W - mg.r]);
+  const y = d3.scaleLinear().domain([0, (d3.max(series.flatMap(s => s.pts).concat(ps || []), d => d.v) || 1) * 1.08]).nice().range([H - mg.b, mg.t]);
+  yAxis(svg, y, mg.l, W - mg.r, f);
+  const gen = d3.line().x((d, i) => x(i)).y(d => y(d.v)).curve(d3.curveMonotoneX);
+  if (!split) svg.append('path').attr('d', d3.area().x((d, i) => x(i)).y0(y(0)).y1(d => y(d.v)).curve(d3.curveMonotoneX)(base)).attr('fill', BROWN).attr('fill-opacity', .07);
+  if (ps) svg.append('path').attr('d', gen(ps.slice(0, k))).attr('fill', 'none').attr('stroke', '#B9AD9C').attr('stroke-width', 1.5).attr('stroke-dasharray', '5 5');
+  series.forEach(s => svg.append('path').attr('d', gen(s.pts)).attr('fill', 'none').attr('stroke', s.color).attr('stroke-width', split ? 1.75 : 2).attr('stroke-linejoin', 'round'));
+  dateTicks(svg, x, base, H);
+  const rule = svg.append('line').attr('y1', mg.t).attr('y2', H - mg.b).attr('stroke', '#CDBFAC').style('opacity', 0);
+  const dots = series.map(s => svg.append('circle').attr('r', split ? 4 : 5.5).attr('fill', s.color).attr('stroke', CARD).attr('stroke-width', split ? 2 : 3).style('opacity', 0));
+  svg.append('rect').attr('x', mg.l).attr('y', 0).attr('width', W - mg.l - mg.r).attr('height', H - mg.b).attr('fill', 'transparent').style('cursor', 'crosshair')
+    .on('mousemove', e => {
+      const i = Math.max(0, Math.min(k - 1, Math.round(x.invert(d3.pointer(e)[0])))), d = base[i], dl = size > 1 ? tpl(L('weekOf'), {date: F.day.format(dateOf(d.d))}) : F.day.format(dateOf(d.d));
+      rule.attr('x1', x(i)).attr('x2', x(i)).style('opacity', 1);
+      series.forEach((s, j) => dots[j].attr('cx', x(i)).attr('cy', y(s.pts[i].v)).style('opacity', 1));
+      tip.show(split ? `<div class="t">${esc(dl)}</div>` + series.slice().sort((a, b) => b.pts[i].v - a.pts[i].v).map(s => `<div class="tr"><i style="background:${s.color}"></i>${esc(valLabel(split, s.k))}<span>${f(s.pts[i].v)}</span></div>`).join('')
+        : `<div class="t">${esc(dl)}</div><b>${ff(d.v)}</b>${ps && ps[i] ? `<div class="t">${esc(L('previousShort'))} ${ff(ps[i].v)}</div>` : ''}`, e);
+    }).on('mouseleave', () => { rule.style('opacity', 0); dots.forEach(d => d.style('opacity', 0)); tip.hide(); });
+}
+
+function donut(el, m, ms) {
+  const gb = ms.split || m.groupBy;
+  const g = d3.rollups(rowsFor(m), v => agg(v, m.measure), r => r[gb]).sort((a, b) => b[1] - a[1]), total = d3.sum(g, d => d[1]);
+  if (!total) return emptyState(el);
+  const f = fmtOf(m.measure), ff = fmtOf(m.measure, true);
+  el.innerHTML = `<div class="donut"><div class="donut-c"><span>${esc(L('total'))}</span><b>${f(total)}</b></div></div><div class="dl">${g.map(([k, v], i) => `<div class="dl-r" data-i="${i}"><i style="background:${color(gb, k, i)}"></i><div>${esc(valLabel(gb, k))}</div><div class="p">${F.percent1(v / total)}</div><div class="v">${f(v)}</div></div>`).join('')}</div>`;
+  el.querySelectorAll('.dl-r').forEach(r => r.onclick = () => pick(gb, g[r.dataset.i][0]));
+  const R = 98, svg = d3.select(el.querySelector('.donut')).insert('svg', ':first-child').attr('width', 196).attr('height', 196).append('g').attr('transform', `translate(${R},${R})`);
+  const arcs = svg.selectAll('path').data(d3.pie().sort(null).value(d => d[1]).padAngle(0.014)(g)).join('path').attr('d', d3.arc().innerRadius(R * 0.69).outerRadius(R).cornerRadius(2)).attr('fill', (d, i) => color(gb, d.data[0], i));
+  bindTip(arcs, d => `<div class="t">${esc(valLabel(gb, d.data[0]))}</div><b>${ff(d.data[1])}</b><div class="t">${esc(tpl(L('ofTotal'), {pct: F.percent1(d.data[1] / total)}))}</div>${hint()}`);
+  clickable(arcs, gb, d => d.data[0]);
+}
+
+function table(el, m, ms, ctx) {
+  const cur = rowsFor(m), cols = m.columns, colKey = c => c.measure || c.field || c.status?.measure;
+  const rows = d3.groups(cur, r => r[m.groupBy]).map(([k, rs]) => { const o = {_k: k, _first: rs[0]}; cols.forEach(c => { if (c.field) o[c.field] = rs[0][c.field]; const mm = c.measure || c.status?.measure; if (mm && !(mm in o)) o[mm] = agg(rs, mm); }); return o; });
+  ctx.count = rows.length;
+  const sk = ms.sortBy, dir = ms.sortDir === 'asc' ? 1 : -1;
+  if (sk) rows.sort((a, b) => { const x = a[sk], y = b[sk]; return (typeof x === 'string' ? x.localeCompare(y) : x - y) * dir; });
+  const tmpl = 'grid-template-columns:' + cols.map(c => `minmax(0,${c.width ?? (c.field ? 1 : 0.85)}fr)`).join(' ');
+  const head = `<div class="tbl-r tbl-h" style="${tmpl}">${cols.map(c => { const k = colKey(c), on = k === sk, arrow = on ? (dir > 0 ? ' ↑' : ' ↓') : ''; return `<div data-sort="${esc(k)}" class="${c.field ? '' : 'r'}${on ? ' on' : ''}">${c.field ? esc(c.label) + arrow : arrow.trim() + ' ' + esc(c.label)}</div>`; }).join('')}</div>`;
+  const shown = rows.slice(0, m.limit || rows.length);
+  const body = shown.map((r, i) => `<div class="tbl-r ck" data-i="${i}" style="${tmpl}">${cols.map(c => {
+    if (c.status) { const v = r[c.status.measure], rule = c.status.rules.find(x => x.min == null || v >= x.min), [bg, fg] = TONES[rule.tone] || TONES.neutral; return `<div class="r"><span class="pill" style="background:${bg};color:${fg}">${esc(rule.label)}</span></div>`; }
+    if (c.measure) return `<div class="r"${c.strong ? ' style="font-weight:600"' : ''}>${fmtOf(c.measure)(r[c.measure])}</div>`;
+    if (c.sub) return `<div style="min-width:0"><div class="tbl-n">${esc(valLabel(c.field, r[c.field]))}</div><div class="tbl-s">${c.sub.map(s => esc(valLabel(s, r._first[s]))).join(' · ')}</div></div>`;
+    if (c.color) return `<div class="tbl-dot"><i style="background:${color(c.color, r[c.field])}"></i><span>${esc(valLabel(c.field, r[c.field]))}</span></div>`;
+    return `<div>${esc(valLabel(c.field, r[c.field]))}</div>`;
+  }).join('')}</div>`).join('');
+  el.innerHTML = head + (rows.length ? body : `<div class="empty">${esc(L('empty'))}</div>`);
+  el.querySelectorAll('.tbl-r.ck').forEach(r => r.onclick = () => pick(m.groupBy, shown[r.dataset.i]._k));
+  el.querySelectorAll('[data-sort]').forEach(h => h.onclick = () => { const k = h.dataset.sort, isStr = cols.some(c => c.field === k); ms.sortDir = ms.sortBy === k ? (ms.sortDir === 'asc' ? 'desc' : 'asc') : (isStr ? 'asc' : 'desc'); ms.sortBy = k; draw(MOUNTS.find(x => x.m === m)); });
+}
+
+function barRanked(el, m, ms) {
+  const gb = ms.split || m.groupBy;
+  let cur = d3.rollups(rowsFor(m), v => agg(v, m.measure), r => r[gb]).sort((a, b) => b[1] - a[1]);
+  if (!cur.length) return emptyState(el);
+  if (m.limit) cur = cur.slice(0, m.limit);
+  const prev = new Map(m.compare && compareOn() ? d3.rollups(rowsFor(m, 'previous'), v => agg(v, m.measure), r => r[gb]) : []), mx = cur[0][1] || 1, f = fmtOf(m.measure);
+  el.innerHTML = `<div class="rk">${cur.map(([k, v], i) => { const p = prev.get(k), dx = p ? change(v, p) : null; return `<div data-i="${i}"><div class="rk-t"><div>${esc(valLabel(gb, k))}</div><div>${dx !== null ? `<small style="color:${dcol(dx, m.measure)}">${fD(dx)}</small>` : ''}<b>${f(v)}</b></div></div><div class="rk-b"><i style="width:${v / mx * 100}%"></i></div></div>`; }).join('')}</div>`;
+  el.querySelectorAll('.rk>div').forEach(r => r.onclick = () => pick(gb, cur[r.dataset.i][0]));
+}
+
+function funnel(el, m) {
+  const cur = rowsFor(m), v = m.steps.map(s => agg(cur, s.measure));
+  el.innerHTML = `<div class="fn">${m.steps.map((s, i) => `${i && s.rate ? `<div class="fn-rate">↓ ${esc(tpl(s.rate, {rate: F.percent2(v[i - 1] ? v[i] / v[i - 1] : 0)}))}</div>` : ''}<div class="fn-step"><span>${esc(s.label || mLabel(s.measure))}</span><b>${fmtOf(s.measure)(v[i])}</b></div>`).join('')}</div>`;
+}
+
+function barGrouped(el, m, ms) {
+  const cur = rowsFor(m), gb = m.groupBy, sp = ms.split, f = fmtOf(m.measure), ff = fmtOf(m.measure, true);
+  const groups = orderOf(gb, [...new Set(cur.map(r => r[gb]))]);
+  if (!groups.length) return emptyState(el);
+  const mg = {t: 22, r: 4, b: 30, l: 56};
+  const xLabels = (svg, x0, H) => svg.append('g').selectAll('text').data(groups).join('text').attr('class', 'ax lk').attr('x', d => x0(d) + x0.bandwidth() / 2).attr('y', H - 8).attr('text-anchor', 'middle').text(d => valLabel(gb, d)).on('click', (e, d) => pick(gb, d));
+  if (sp) {
+    const keys = orderOf(sp, [...new Set(cur.map(r => r[sp]))]);
+    const data = groups.map(g => { const by = new Map(d3.rollups(cur.filter(r => r[gb] === g), v => agg(v, m.measure), r => r[sp])), o = {g}; keys.forEach(k => o[k] = by.get(k) || 0); return o; });
+    seriesLegend(el, sp, keys);
+    const {W, H, svg} = plot(el), st = d3.stack().keys(keys)(data);
+    const x0 = d3.scaleBand().domain(groups).range([mg.l, W - mg.r]).padding(0.38);
+    const y = d3.scaleLinear().domain([0, (d3.max(st[st.length - 1], d => d[1]) || 1) * 1.08]).nice().range([H - mg.b, mg.t]);
+    yAxis(svg, y, mg.l, W - mg.r, f);
+    st.forEach((layer, li) => {
+      const sel = svg.append('g').selectAll('path').data(layer.map(d => ({d, k: layer.key, g: d.data.g}))).join('path')
+        .attr('d', o => li === st.length - 1 ? rrTop(x0(o.g), y(o.d[1]), x0.bandwidth(), y(o.d[0]) - y(o.d[1]), 4) : `M${x0(o.g)},${y(o.d[1])}h${x0.bandwidth()}V${y(o.d[0]) - 1.5}h${-x0.bandwidth()}Z`)
+        .attr('fill', color(sp, layer.key));
+      bindTip(sel, o => `<div class="t">${esc(valLabel(gb, o.g))} · ${esc(valLabel(sp, o.k))}</div><b>${ff(o.d[1] - o.d[0])}</b>${hint()}`);
+      clickable(sel, sp, o => o.k);
+    });
+    svg.append('g').selectAll('text').data(data).join('text').attr('x', d => x0(d.g) + x0.bandwidth() / 2).attr('y', d => y(d3.sum(keys, k => d[k])) - 8).attr('text-anchor', 'middle').attr('font-size', 12).attr('font-weight', 600).attr('fill', INK).text(d => f(d3.sum(keys, k => d[k])));
+    return xLabels(svg, x0, H);
+  }
+  const curM = new Map(d3.rollups(cur, v => agg(v, m.measure), r => r[gb])), cmp = m.compare !== false && compareOn();
+  const prev = new Map(cmp ? d3.rollups(rowsFor(m, 'previous'), v => agg(v, m.measure), r => r[gb]) : []);
+  const data = groups.map(k => ({k, current: curM.get(k) || 0, previous: prev.get(k) || 0}));
+  const series = [{key: 'current', label: L('thisPeriod'), color: INK}].concat(prev.size ? [{key: 'previous', label: L('previousPeriod'), color: SAND}] : []);
+  legendRow(el, series);
+  const {W, H, svg} = plot(el);
+  const x0 = d3.scaleBand().domain(groups).range([mg.l, W - mg.r]).paddingInner(0.3).paddingOuter(0.12);
+  const x1 = d3.scaleBand().domain(series.map(s => s.key)).range([0, x0.bandwidth()]).padding(0.1);
+  const y = d3.scaleLinear().domain([0, (d3.max(data, d => Math.max(d.current, d.previous)) || 1) * 1.12]).nice().range([H - mg.b, mg.t]);
+  yAxis(svg, y, mg.l, W - mg.r, f);
+  const g = svg.append('g').selectAll('g').data(data).join('g').attr('transform', d => `translate(${x0(d.k)},0)`);
+  const bars = g.selectAll('path').data(d => series.map(s => ({s, d, v: d[s.key]}))).join('path').attr('d', o => rrTop(x1(o.s.key), y(o.v), x1.bandwidth(), y(0) - y(o.v), 4)).attr('fill', o => o.s.color);
+  bindTip(bars, o => `<div class="t">${esc(valLabel(gb, o.d.k))} · ${esc(o.s.label)}</div><b>${ff(o.v)}</b>${hint()}`);
+  clickable(bars, gb, o => o.d.k);
+  if (prev.size) g.filter(d => d.previous).append('text').attr('x', x0.bandwidth() / 2).attr('y', d => y(Math.max(d.current, d.previous)) - 8).attr('text-anchor', 'middle').attr('font-size', 12).attr('font-weight', 600).attr('fill', d => dcol(change(d.current, d.previous), m.measure)).text(d => fD(change(d.current, d.previous)));
+  xLabels(svg, x0, H);
+}
+
+function barDiverging(el, m, ms) {
+  const gb = ms.split || m.groupBy;
+  const prev = new Map(d3.rollups(rowsFor(m, 'previous'), v => agg(v, m.measure), r => r[gb]));
+  let rows = d3.rollups(rowsFor(m), v => agg(v, m.measure), r => r[gb]).filter(([k]) => prev.get(k)).map(([k, v]) => ({k, v: change(v, prev.get(k))})).sort((a, b) => b.v - a.v);
+  if (!rows.length) return emptyState(el);
+  if (m.limit && rows.length > m.limit) rows = rows.slice(0, Math.ceil(m.limit / 2)).concat(rows.slice(-Math.floor(m.limit / 2)));
+  const {W, H, svg} = plot(el), lw = Math.min(170, W * 0.32), mg = {t: 2, r: 56, b: 2, l: lw + 60};
+  const y = d3.scaleBand().domain(rows.map(d => d.k)).range([mg.t, H - mg.b]).padding(0.34), cy = d => y(d.k) + y.bandwidth() / 2;
+  const mx = d3.max(rows, d => Math.abs(d.v)) || 1, x = d3.scaleLinear().domain([-mx, mx]).range([mg.l, W - mg.r]);
+  const col = d => d.v >= 0 ? GOOD : BAD;
+  svg.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y1', 0).attr('y2', H).attr('stroke', '#CDBFAC');
+  const g = svg.append('g').selectAll('g').data(rows).join('g');
+  clickable(g.append('text').attr('class', 'lkt').attr('x', lw).attr('y', cy).attr('dy', '0.32em').attr('text-anchor', 'end').attr('font-size', 13).attr('fill', INK).text(d => valLabel(gb, d.k)), gb, d => d.k);
+  const bars = g.append('rect').attr('x', d => Math.min(x(0), x(d.v))).attr('width', d => Math.abs(x(d.v) - x(0))).attr('y', d => y(d.k)).attr('height', y.bandwidth()).attr('rx', 3).attr('fill', col).attr('fill-opacity', .88);
+  bindTip(bars, d => `<div class="t">${esc(valLabel(gb, d.k))}</div><b>${fD(d.v)}</b><div class="t">${esc(tpl(L('vsPrevious'), {n: days()}))}</div>${hint()}`);
+  clickable(bars, gb, d => d.k);
+  g.append('text').attr('x', d => x(d.v) + (d.v >= 0 ? 7 : -7)).attr('y', cy).attr('dy', '0.32em').attr('text-anchor', d => d.v >= 0 ? 'start' : 'end').attr('font-size', 12).attr('font-weight', 600).attr('fill', col).style('pointer-events', 'none').text(d => fD(d.v));
+}
+
+function barStacked100(el, m, ms) {
+  const cur = rowsFor(m); if (!cur.length) return emptyState(el);
+  const sb = ms.split || m.stackBy, gb = m.groupBy, keys = orderOf(sb, [...new Set(cur.map(r => r[sb]))]);
+  const rows = d3.groups(cur, r => r[gb]).map(([k, rs]) => { const by = new Map(d3.rollups(rs, v => agg(v, m.measure), r => r[sb])), tot = d3.sum([...by.values()]); let acc = 0; return {k, tot, segs: keys.map(s => { const v = by.get(s) || 0, o = {s, v, p: tot ? v / tot : 0, x0: acc}; acc += o.p; return o; })}; }).sort((a, b) => b.tot - a.tot);
+  seriesLegend(el, sb, keys);
+  const {W, H, svg} = plot(el), lw = 118, f = fmtOf(m.measure);
+  const y = d3.scaleBand().domain(rows.map(r => r.k)).range([0, H]).padding(0.3), x = d3.scaleLinear().domain([0, 1]).range([lw, W]);
+  const g = svg.append('g').selectAll('g').data(rows).join('g'), mid = r => y(r.k) + y.bandwidth() / 2;
+  clickable(g.append('text').attr('y', r => mid(r) - 8).attr('dy', '0.32em').attr('font-size', 13).attr('font-weight', 500).attr('fill', INK).text(r => valLabel(gb, r.k)), gb, r => r.k);
+  g.append('text').attr('class', 'ax').attr('y', r => mid(r) + 9).attr('dy', '0.32em').text(r => f(r.tot));
+  const sg = g.selectAll('g').data(r => r.segs.map(o => ({...o, r}))).join('g'), w = o => Math.max(0, x(o.x0 + o.p) - x(o.x0) - 2);
+  const rects = sg.append('rect').attr('x', o => x(o.x0)).attr('width', w).attr('y', o => y(o.r.k)).attr('height', y.bandwidth()).attr('rx', 3).attr('fill', o => color(sb, o.s));
+  bindTip(rects, o => `<div class="t">${esc(valLabel(gb, o.r.k))} · ${esc(valLabel(sb, o.s))}</div><b>${F.percent(o.p)}</b><div class="t">${fmtOf(m.measure, true)(o.v)}</div>${hint()}`);
+  clickable(rects, sb, o => o.s);
+  sg.filter(o => w(o) > 36).append('text').attr('x', o => x(o.x0) + 8).attr('y', o => mid(o.r)).attr('dy', '0.32em').attr('font-size', 12).attr('font-weight', 600).attr('fill', o => onDark(color(sb, o.s)) ? CARD : INK).style('pointer-events', 'none').text(o => F.percent(o.p));
+}
+
+function area(el, m, ms) {
+  const cur = rowsFor(m); if (!cur.length) return emptyState(el);
+  const sb = ms.split || m.stackBy, size = bucketSize(m), keys = orderOf(sb, [...new Set(cur.map(r => r[sb]))]);
+  const data = buckets(cur, 'current', size).map(b => { const by = new Map(d3.rollups(b.rows, v => agg(v, m.measure), r => r[sb])), o = {_d: b.d}; keys.forEach(k => o[k] = by.get(k) || 0); return o; });
+  seriesLegend(el, sb, keys);
+  const {W, H, svg} = plot(el), mg = {t: 10, r: 8, b: 28, l: 56}, k = data.length, f = fmtOf(m.measure);
+  const st = d3.stack().keys(keys)(data), x = d3.scaleLinear().domain([0, Math.max(1, k - 1)]).range([mg.l, W - mg.r]);
+  const y = d3.scaleLinear().domain([0, (d3.max(st[st.length - 1], d => d[1]) || 1) * 1.08]).nice().range([H - mg.b, mg.t]);
+  yAxis(svg, y, mg.l, W - mg.r, f);
+  svg.append('g').selectAll('path').data(st).join('path').attr('d', d3.area().x((d, i) => x(i)).y0(d => y(d[0])).y1(d => y(d[1])).curve(d3.curveMonotoneX)).attr('fill', d => color(sb, d.key)).attr('stroke', CARD).attr('stroke-width', 1);
+  dateTicks(svg, x, data, H);
+  const rule = svg.append('line').attr('y1', mg.t).attr('y2', H - mg.b).attr('stroke', INK).attr('stroke-opacity', .35).style('opacity', 0).style('pointer-events', 'none');
+  svg.append('rect').attr('x', mg.l).attr('y', mg.t).attr('width', W - mg.l - mg.r).attr('height', H - mg.t - mg.b).attr('fill', 'transparent').on('mousemove', e => {
+    const i = Math.max(0, Math.min(k - 1, Math.round(x.invert(d3.pointer(e)[0])))), d = data[i], dl = F.day.format(dateOf(d._d));
+    rule.attr('x1', x(i)).attr('x2', x(i)).style('opacity', 1);
+    tip.show(`<div class="t">${size > 1 ? esc(tpl(L('weekOf'), {date: dl})) : dl}</div>` + keys.slice().reverse().map(kk => `<div class="tr"><i style="background:${color(sb, kk)}"></i>${esc(valLabel(sb, kk))}<span>${f(d[kk])}</span></div>`).join('') + `<div class="tr tt">${esc(L('total'))}<span>${f(d3.sum(keys, kk => d[kk]))}</span></div>`, e);
+  }).on('mouseleave', () => { rule.style('opacity', 0); tip.hide(); });
+}
+
+function bullet(el, m) {
+  const cur = rowsFor(m), n = days();
+  el.innerHTML = `<div class="bullets">${m.items.map(it => {
+    const v = agg(cur, it.measure), t = it.scale === false || !m.targetDays ? it.target : it.target * n / m.targetDays, f = fmtOf(it.measure), mx = Math.max(v, t) * 1.2 || 1;
+    const lower = D.measures[it.measure]?.better === 'down', ok = lower ? v <= t : v >= t, lab = it.label || mLabel(it.measure);
+    return `<div><div class="bl-top"><span class="bl-l">${esc(lab)}</span><span class="bl-v">${f(v)}</span></div><div class="bl-track" data-tip="${esc(lab)}|${f(v)} / ${f(t)}"><div class="bl-band" style="width:${t / mx * 100}%"></div><div class="bl-fill" style="width:${v / mx * 100}%"></div><div class="bl-tgt" style="left:${t / mx * 100}%"></div></div><div class="bl-sub"><span>${esc(tpl(L('target'), {value: f(t)}))}${lower ? ' · ' + esc(L('lowerIsBetter')) : ''}</span><span style="color:${ok ? GOOD : BAD};font-weight:600">${esc(tpl(L('ofTarget'), {pct: F.percent(t ? v / t : 0)}))}</span></div></div>`;
+  }).join('')}</div>`;
+}
+
+function scatter(el, m, ms) {
+  const cf = ms.split || m.color;
+  const data = d3.groups(rowsFor(m), r => r[m.groupBy]).map(([k, rs]) => ({k, c: cf ? rs[0][cf] : null, x: agg(rs, m.x), y: agg(rs, m.y), s: agg(rs, m.size)}));
+  if (!data.length) return emptyState(el);
+  const cats = cf ? orderOf(cf, [...new Set(data.map(d => d.c))]) : [], col = c => cf ? color(cf, c) : BROWN;
+  if (cf) seriesLegend(el, cf, cats, tpl(L('bubbleSize'), {measure: mLabel(m.size).toLowerCase()}));
+  const {W, H, svg} = plot(el), mg = {t: 12, r: 20, b: 44, l: 64}, fx = fmtOf(m.x), fy = fmtOf(m.y), fs = fmtOf(m.size);
+  const x = d3.scaleLinear().domain([0, d3.max(data, d => d.x) * 1.1 || 1]).nice().range([mg.l, W - mg.r]);
+  const y = d3.scaleLinear().domain([0, d3.max(data, d => d.y) * 1.12 || 1]).nice().range([H - mg.b, mg.t]);
+  const r = d3.scaleSqrt().domain([0, d3.max(data, d => d.s) || 1]).range([0, 26]);
+  yAxis(svg, y, mg.l, W - mg.r, fy, 5);
+  x.ticks(5).forEach(t => { if (t > 0) svg.append('line').attr('x1', x(t)).attr('x2', x(t)).attr('y1', mg.t).attr('y2', H - mg.b).attr('stroke', GRID).attr('stroke-dasharray', '3 4'); svg.append('text').attr('class', 'ax').attr('x', x(t)).attr('y', H - mg.b + 18).attr('text-anchor', 'middle').text(fx(t)); });
+  svg.append('text').attr('class', 'ax').attr('x', W - mg.r).attr('y', H - 4).attr('text-anchor', 'end').text(mLabel(m.x) + ' →');
+  svg.append('text').attr('class', 'ax').attr('transform', `translate(14,${(mg.t + H - mg.b) / 2}) rotate(-90)`).attr('text-anchor', 'middle').text(mLabel(m.y) + ' →');
+  if (m.reference) {
+    const rx = m.reference.x === 'median' ? d3.median(data, d => d.x) : m.reference.x, ry = m.reference.y === 'median' ? d3.median(data, d => d.y) : m.reference.y;
+    if (rx != null) svg.append('line').attr('x1', x(rx)).attr('x2', x(rx)).attr('y1', mg.t).attr('y2', H - mg.b).attr('stroke', BROWN).attr('stroke-opacity', .55).attr('stroke-dasharray', '5 4');
+    if (ry != null) svg.append('line').attr('x1', mg.l).attr('x2', W - mg.r).attr('y1', y(ry)).attr('y2', y(ry)).attr('stroke', BROWN).attr('stroke-opacity', .55).attr('stroke-dasharray', '5 4');
+  }
+  if (m.quadrants) [[mg.l + 10, mg.t + 16, 'start'], [W - mg.r - 8, mg.t + 16, 'end'], [mg.l + 10, H - mg.b - 10, 'start'], [W - mg.r - 8, H - mg.b - 10, 'end']].forEach(([qx, qy, a], i) => m.quadrants[i] && svg.append('text').attr('x', qx).attr('y', qy).attr('text-anchor', a).attr('font-family', "'Bodoni Moda', serif").attr('font-style', 'italic').attr('font-size', 14).attr('fill', MUTED).text(m.quadrants[i]));
+  const sorted = data.slice().sort((a, b) => b.s - a.s);
+  const dots = svg.append('g').selectAll('circle').data(sorted).join('circle').attr('cx', d => x(d.x)).attr('cy', d => y(d.y)).attr('r', d => r(d.s)).attr('fill', d => col(d.c)).attr('fill-opacity', .9).attr('stroke', d => onDark(col(d.c)) ? CARD : d3.color(col(d.c)).darker(0.9)).attr('stroke-width', 1.5);
+  bindTip(dots, d => `<div class="t">${esc(valLabel(m.groupBy, d.k))}${cf ? ' · ' + esc(valLabel(cf, d.c)) : ''}</div><b>${fy(d.y)} ${esc(mLabel(m.y))}</b><div class="t">${fx(d.x)} ${esc(mLabel(m.x).toLowerCase())} · ${fs(d.s)} ${esc(mLabel(m.size).toLowerCase())}</div>${hint()}`);
+  clickable(dots, m.groupBy, d => d.k);
+  svg.append('g').selectAll('text').data(sorted.slice(0, m.labelTop || 0)).join('text').each(function (d) { const lab = String(valLabel(m.groupBy, d.k)), right = x(d.x) + r(d.s) + 6 + lab.length * 6.6 > W; d3.select(this).attr('x', right ? x(d.x) - r(d.s) - 6 : x(d.x) + r(d.s) + 6).attr('text-anchor', right ? 'end' : 'start').text(lab); }).attr('y', d => y(d.y)).attr('dy', '0.32em').attr('font-size', 12).attr('font-weight', 600).attr('fill', INK).attr('stroke', CARD).attr('stroke-width', 4).attr('paint-order', 'stroke').style('pointer-events', 'none');
+}
+
+function waterfall(el, m) {
+  const src = rowsFor(m); if (!src.length) return emptyState(el);
+  let run = 0;
+  const items = src.map(d => { const lab = d[m.label], val = d[m.value]; if (d[m.kind] === 'total') { const v = val ?? run; run = v; return {lab, v, a: 0, b: v, kind: 'total'}; } const o = {lab, v: val, a: run, b: run + val, kind: val >= 0 ? 'up' : 'down'}; run += val; return o; });
+  const {W, H, svg} = plot(el), mg = {t: 26, r: 4, b: 42, l: 56}, f = F[m.format] || fieldFmt(m.value), ff = F[(m.format || 'currency') + 'Full'] || f;
+  const lo = d3.min(items, d => d.kind === 'total' ? d.b : Math.min(d.a, d.b)), hi = d3.max(items, d => Math.max(d.a, d.b));
+  const mag = Math.pow(10, Math.floor(Math.log10(Math.max(1, lo)))), floor = lo > 0 ? Math.floor(lo * 0.8 / mag) * mag : 0;
+  const y = d3.scaleLinear().domain([floor, hi * 1.04]).nice().range([H - mg.b, mg.t]), base = y.domain()[0];
+  yAxis(svg, y, mg.l, W - mg.r, f);
+  const x = d3.scaleBand().domain(items.map(d => d.lab)).range([mg.l, W - mg.r]).padding(0.26), bw = x.bandwidth();
+  const col = d => d.kind === 'total' ? INK : d.kind === 'up' ? GOOD : BAD, sign = d => d.kind === 'total' ? f(d.v) : (d.v >= 0 ? '+' : '−') + f(Math.abs(d.v));
+  items.forEach((d, i) => {
+    const top = Math.max(d.a, d.b), bot = d.kind === 'total' ? base : Math.min(d.a, d.b);
+    bindTip(svg.append('path').datum(d).attr('d', rrTop(x(d.lab), y(top), bw, y(bot) - y(top), 4)).attr('fill', col(d)), d => `<div class="t">${esc(d.lab)}</div><b>${d.kind === 'total' ? ff(d.v) : (d.v >= 0 ? '+' : '−') + ff(Math.abs(d.v))}</b>`);
+    if (i < items.length - 1) svg.append('line').attr('x1', x(d.lab) + bw).attr('x2', x(items[i + 1].lab)).attr('y1', y(d.b) + .5).attr('y2', y(d.b) + .5).attr('stroke', '#CDBFAC').attr('stroke-dasharray', '3 3');
+    svg.append('text').attr('x', x(d.lab) + bw / 2).attr('y', y(top) - 8).attr('text-anchor', 'middle').attr('font-size', 12).attr('font-weight', 600).attr('fill', col(d)).text(sign(d));
+    const t = svg.append('text').attr('class', 'ax').attr('x', x(d.lab) + bw / 2).attr('y', H - mg.b + 18).attr('text-anchor', 'middle');
+    String(d.lab).split(' ').forEach((w, k) => t.append('tspan').attr('x', x(d.lab) + bw / 2).attr('dy', k ? '1.25em' : 0).text(w));
+  });
+}
+
+function heatmap(el, m) {
+  const cur = rowsFor(m); if (!cur.length) return emptyState(el);
+  const rk = orderOf(m.rows, [...new Set(cur.map(r => r[m.rows]))]), ck = [...new Set(cur.map(r => r[m.columns]))].sort((a, b) => a - b);
+  const cell = d3.rollup(cur, v => agg(v, m.measure), r => r[m.rows], r => r[m.columns]), f = fmtOf(m.measure);
+  const {W, H, svg} = plot(el), mg = {t: 20, b: 36, l: 42}, gap = 3;
+  const cw = (W - mg.l - (ck.length - 1) * gap) / ck.length, ch = (H - mg.t - mg.b - (rk.length - 1) * gap) / rk.length;
+  const vals = rk.flatMap(a => ck.map(b => cell.get(a)?.get(b) || 0)), max = d3.max(vals) || 1, c = d3.scaleSequential(t => SEQ(0.04 + t * 0.96)).domain([0, max]);
+  const isHour = m.columns === 'hour', clab = v => isHour ? hourLabel(v) : v;
+  let peak = {v: -1};
+  rk.forEach((a, i) => {
+    svg.append('text').attr('class', 'ax').attr('x', mg.l - 10).attr('y', mg.t + i * (ch + gap) + ch / 2).attr('dy', '0.32em').attr('text-anchor', 'end').text(valLabel(m.rows, a));
+    ck.forEach((b, j) => {
+      const v = cell.get(a)?.get(b) || 0; if (v > peak.v) peak = {v, a, b};
+      bindTip(svg.append('rect').datum({a, b, v}).attr('x', mg.l + j * (cw + gap)).attr('y', mg.t + i * (ch + gap)).attr('width', cw).attr('height', ch).attr('rx', 3).attr('fill', c(v)), d => `<div class="t">${esc(d.a)}, ${esc(clab(d.b))}${isHour ? '–' + esc(hourLabel(d.b + 1)) : ''}</div><b>${f(d.v)} ${esc(mLabel(m.measure).toLowerCase())}</b>`);
+    });
+  });
+  const step = Math.ceil(ck.length / 8);
+  ck.forEach((b, j) => { if (j % step === 0) svg.append('text').attr('class', 'ax').attr('x', mg.l + j * (cw + gap) + cw / 2).attr('y', mg.t - 8).attr('text-anchor', 'middle').text(clab(b)); });
+  const gid = 'g' + Math.random().toString(36).slice(2, 8), grad = svg.append('defs').append('linearGradient').attr('id', gid);
+  d3.range(0, 1.01, 0.1).forEach(t => grad.append('stop').attr('offset', t).attr('stop-color', c(t * max)));
+  const ly = H - 12;
+  svg.append('text').attr('class', 'ax').attr('x', mg.l).attr('y', ly).attr('dy', '0.32em').text(tpl(L('busiest'), {cell: `${peak.a}, ${clab(peak.b)}`, value: `${f(peak.v)} ${mLabel(m.measure).toLowerCase()}`}));
+  svg.append('text').attr('class', 'ax').attr('x', W - 148).attr('y', ly).attr('dy', '0.32em').attr('text-anchor', 'end').text(L('fewer'));
+  svg.append('rect').attr('x', W - 140).attr('y', ly - 4).attr('width', 100).attr('height', 8).attr('rx', 4).attr('fill', `url(#${gid})`);
+  svg.append('text').attr('class', 'ax').attr('x', W - 32).attr('y', ly).attr('dy', '0.32em').text(L('more'));
+}
+
+function cohort(el, m) {
+  const cur = rowsFor(m); if (!cur.length) return emptyState(el);
+  const cs = orderOf(m.cohort, [...new Set(cur.map(r => r[m.cohort]))]), ps = [...new Set(cur.map(r => r[m.period]))].sort((a, b) => a - b);
+  const get = new Map(cur.map(r => [r[m.cohort] + '|' + r[m.period], r])), size = new Map(cur.map(r => [r[m.cohort], r[m.size]]));
+  const c = d3.scaleSequential(t => SEQ(t)).domain([0.15, 1]), cols = `grid-template-columns:96px 84px repeat(${ps.length},minmax(0,1fr))`;
+  let h = `<div class="coh"><div class="coh-r coh-h" style="${cols}"><div>${esc(m.cohortLabel || fLabel(m.cohort))}</div><div class="num">${esc(m.sizeLabel || fLabel(m.size))}</div>${ps.map(p => `<div class="coh-m">${esc(tpl(m.periodLabel || '{n}', {n: p}))}</div>`).join('')}</div>`;
+  cs.forEach(k => {
+    h += `<div class="coh-r" style="${cols}"><div>${esc(k)}</div><div class="num">${F.integer(size.get(k))}</div>${ps.map(p => {
+      const r = get.get(k + '|' + p); if (!r) return '<div class="coh-c empty-c"></div>';
+      const v = r[m.value], bg = c(v);
+      return `<div class="coh-c" style="background:${bg};color:${onDark(bg) ? CARD : INK}" data-tip="${esc(tpl(L('cohortCell'), {cohort: k, n: p}))}|${esc(tpl(L('retained'), {pct: F.percent(v), count: F.integer(v * size.get(k))}))}">${F.percent(v)}</div>`;
+    }).join('')}</div>`;
+  });
+  el.innerHTML = h + '</div>';
+}
+
+function treemap(el, m) {
+  const cur = rowsFor(m); if (!cur.length) return emptyState(el);
+  const [g1, g2] = m.groupBy, cf = m.color || g1, groups = d3.rollups(cur, v => agg(v, m.measure), r => r[g1], r => r[g2]);
+  seriesLegend(el, g1, orderOf(g1, groups.map(g => g[0])));
+  const {W, H, svg} = plot(el), f = fmtOf(m.measure), ff = fmtOf(m.measure, true);
+  const root = d3.hierarchy({children: groups.map(([k, items]) => ({name: k, color: color(cf, k), children: items.map(([n, v]) => ({name: n, value: v}))}))}).sum(d => d.value || 0).sort((a, b) => b.value - a.value);
+  d3.treemap().size([W, H]).paddingInner(3).round(true)(root);
+  const total = root.value, fill = d => d3.interpolateRgb(d.parent.data.color, '#F4EDE2')(d.parent.children.indexOf(d) * 0.2), tc = d => onDark(fill(d)) ? CARD : INK;
+  const g = svg.append('g').selectAll('g').data(root.leaves()).join('g').attr('transform', d => `translate(${d.x0},${d.y0})`);
+  const rects = g.append('rect').attr('width', d => d.x1 - d.x0).attr('height', d => d.y1 - d.y0).attr('rx', 6).attr('fill', fill);
+  bindTip(rects, d => `<div class="t">${esc(valLabel(g1, d.parent.data.name))} · ${esc(valLabel(g2, d.data.name))}</div><b>${ff(d.value)}</b><div class="t">${esc(tpl(L('ofTotal'), {pct: F.percent1(d.value / total)}))}</div>${hint()}`);
+  clickable(rects, g1, d => d.parent.data.name);
+  const big = d => d.x1 - d.x0 > 92 && d.y1 - d.y0 > 50;
+  g.filter(big).append('text').attr('x', 11).attr('y', 21).attr('font-size', 13).attr('font-weight', 600).attr('fill', tc).style('pointer-events', 'none').text(d => valLabel(g2, d.data.name));
+  g.filter(big).append('text').attr('x', 11).attr('y', 39).attr('font-size', 12).attr('fill', tc).attr('fill-opacity', .85).style('pointer-events', 'none').text(d => `${f(d.value)} · ${F.percent(d.value / total)}`);
+  g.filter(d => !big(d) && d.x1 - d.x0 > 50 && d.y1 - d.y0 > 26).append('text').attr('x', 8).attr('y', 18).attr('font-size', 12).attr('font-weight', 600).attr('fill', tc).style('pointer-events', 'none').text(d => f(d.value));
+}
+
+function calendar(el, m) {
+  const cur = rowsFor(m); if (!cur.length) return emptyState(el);
+  const dd = d3.rollups(cur, v => agg(v, m.measure), r => r[m.x]).map(([k, v]) => ({dt: dateOf(dayOf(k)), v})).sort((a, b) => a.dt - b.dt);
+  const dow = d => (d.getDay() + 6) % 7, start = new Date(dd[0].dt); start.setDate(start.getDate() - dow(start));
+  const wk = d => Math.floor(Math.round((d - start) / 864e5) / 7), weeks = wk(dd[dd.length - 1].dt) + 1, f = fmtOf(m.measure), ff = fmtOf(m.measure, true);
+  const mg = {t: 22, l: 36, b: 40}, gap = 3, W = el.clientWidth, cs = Math.max(6, Math.min(17, Math.floor((W - mg.l) / weeks) - gap)), H = mg.t + 7 * (cs + gap) + mg.b;
+  el.style.height = H + 'px';
+  const {svg} = plot(el, H), colors = d3.quantize(t => SEQ(0.06 + t * 0.94), m.colorSteps || 5), q = d3.scaleQuantile().domain(dd.map(d => d.v)).range(colors);
+  [1, 3, 5].forEach(i => svg.append('text').attr('class', 'ax').attr('x', mg.l - 8).attr('y', mg.t + (i - 1) * (cs + gap) + cs / 2).attr('dy', '0.32em').attr('text-anchor', 'end').text(F.weekday.format(new Date(2024, 0, i))));
+  bindTip(svg.append('g').selectAll('rect').data(dd).join('rect').attr('x', d => mg.l + wk(d.dt) * (cs + gap)).attr('y', d => mg.t + dow(d.dt) * (cs + gap)).attr('width', cs).attr('height', cs).attr('rx', 3).attr('fill', d => q(d.v)), d => `<div class="t">${F.dayLong.format(d.dt)}</div><b>${ff(d.v)}</b>`);
+  dd.filter(d => d.dt.getDate() === 1).forEach(d => svg.append('text').attr('class', 'ax').attr('x', mg.l + wk(d.dt) * (cs + gap)).attr('y', mg.t - 8).text(d.dt.getMonth() === 0 ? F.monthYear.format(d.dt) : F.month.format(d.dt)));
+  const best = dd.reduce((a, b) => b.v > a.v ? b : a), ly = H - 14, right = mg.l + weeks * (cs + gap) - gap, lx = right - 28 - colors.length * 15;
+  svg.append('text').attr('class', 'ax').attr('x', mg.l).attr('y', ly).attr('dy', '0.32em').text(tpl(L('bestDay'), {date: F.dayLong.format(best.dt), value: f(best.v)}));
+  svg.append('text').attr('class', 'ax').attr('x', lx - 8).attr('y', ly).attr('dy', '0.32em').attr('text-anchor', 'end').text(L('less'));
+  colors.forEach((c, i) => svg.append('rect').attr('x', lx + i * 15).attr('y', ly - 6).attr('width', 12).attr('height', 12).attr('rx', 3).attr('fill', c));
+  svg.append('text').attr('class', 'ax').attr('x', right).attr('y', ly).attr('dy', '0.32em').attr('text-anchor', 'end').text(L('more'));
+}
+
+async function choropleth(el, m, ms) {
+  const rows0 = rowsFor(m); if (!rows0.length) return emptyState(el);
+  const topo = await getWorld(), mid = ms.measure, f = fmtOf(mid), ff = fmtOf(mid, true);
+  const feats = topojson.feature(topo, topo.objects.countries).features.filter(x => x.id !== '010');
+  const val = r => agg([r], mid), rows = rows0.slice().sort((a, b) => val(b) - val(a)), total = agg(rows, mid);
+  const byId = new Map(rows.map(r => [r[m.key], r])), colors = d3.quantize(t => SEQ(0.1 + t * 0.9), m.colorSteps || 6);
+  const q = d3.scaleQuantile().domain(rows.map(val)).range(colors), cuts = q.quantiles(), top = m.listTop || 8;
+  el.innerHTML = `<div class="map"><div class="map-l"><div class="map-svg"></div><div class="mlg"><div>${esc(tpl(L('perCountry'), {measure: mLabel(mid)}))}</div><div class="mlg-s">${colors.map((c, i) => `<div class="mlg-i"><div class="mlg-b" style="background:${c}"></div><span>${f(i ? cuts[i - 1] : val(rows[rows.length - 1]))}</span></div>`).join('')}<span class="mlg-max">${f(val(rows[0]))}</span></div></div></div><div class="map-r"></div></div>`;
+  const box = el.querySelector('.map-svg'), W = box.clientWidth, H = box.clientHeight, side = el.querySelector('.map-r');
+  const path = d3.geoPath(d3.geoNaturalEarth1().fitSize([W, H], {type: 'FeatureCollection', features: feats}));
+  const svg = d3.select(box).append('svg').attr('width', W).attr('height', H).style('display', 'block');
+  side.innerHTML = `<div class="side-k">${esc(tpl(L('totalOf'), {measure: mLabel(mid).toLowerCase()}))}</div><div class="side-v">${ff(total)}</div><div class="side-s">${esc(tpl(L('countries'), {n: rows.length, top: Math.min(top, rows.length)}))}</div>` +
+    rows.slice(0, top).map((r, i) => `<div class="lr" data-key="${esc(r[m.key])}"><span class="lr-n">${i + 1}</span><span class="lr-name">${esc(r[m.name])}</span><span class="lr-p">${F.percent1(val(r) / total)}</span><span class="lr-v">${f(val(r))}</span><div class="lr-bar"><i style="width:${val(r) / val(rows[0]) * 100}%;background:${q(val(r))}"></i></div></div>`).join('');
+  const paths = svg.append('g').selectAll('path').data(feats).join('path').attr('d', path).attr('fill', d => byId.has(d.id) ? q(val(byId.get(d.id))) : '#EDE7DE').attr('stroke', CARD).attr('stroke-width', 0.6);
+  const hl = id => { paths.attr('stroke', d => d.id === id ? INK : CARD).attr('stroke-width', d => d.id === id ? 1.4 : 0.6); paths.filter(d => d.id === id).raise(); side.querySelectorAll('.lr').forEach(r => r.classList.toggle('on', r.dataset.key === id)); };
+  paths.on('mouseenter', (e, d) => { hl(d.id); const r = byId.get(d.id); tip.show(r ? `<div class="t">${esc(r[m.name])}</div><b>${ff(val(r))}</b><div class="t">${esc(tpl(L('ofTotal'), {pct: F.percent1(val(r) / total)}))} · ${esc(tpl(L('rank'), {n: rows.indexOf(r) + 1}))}</div>${hint()}` : `<div class="t">${esc(d.properties.name)}</div><div>${esc(L('noData'))}</div>`, e); })
+    .on('mousemove', e => tip.move(e)).on('mouseleave', () => { hl(null); tip.hide(); })
+    .on('click', (e, d) => { if (byId.has(d.id)) { tip.hide(); pick(m.key, d.id); } }).style('cursor', d => byId.has(d.id) ? 'pointer' : 'default');
+  side.querySelectorAll('.lr').forEach(r => { r.onmouseenter = () => hl(r.dataset.key); r.onmouseleave = () => hl(null); r.onclick = () => pick(m.key, r.dataset.key); });
+}
+
+const RENDER = {kpi, line, donut, table, funnel, bullet, scatter, waterfall, heatmap, cohort, treemap, calendar, choropleth, area,
+  bar: (el, m, ms, ctx) => ({ranked: barRanked, grouped: barGrouped, diverging: barDiverging, 'stacked-100': barStacked100})[m.layout](el, m, ms, ctx)};
+const HEIGHTS = {line: 300, area: 300, bar: 300, scatter: 360, waterfall: 320, heatmap: 300, cohort: 300, treemap: 260, choropleth: 440, bullet: 320};
+const AUTO = new Set(['kpi', 'table', 'funnel', 'donut', 'calendar']);
+const AUTO_BARS = new Set(['ranked']);
+
+/* ---------- filter controls ---------- */
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const debounce = (fn, ms = 220) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+function segmented(opts, cur, onPick) {
+  const s = el('div', 'seg');
+  opts.forEach(([v, label]) => { const b = el('button', v === cur ? 'on' : ''); b.textContent = label; b.onclick = () => onPick(v); s.appendChild(b); });
+  return s;
+}
+function switchCtl(label, on, onToggle) {
+  const b = el('button', 'sw' + (on ? ' on' : ''), `<span class="sw-t"></span><span>${esc(label)}</span>`);
+  b.onclick = () => { b.classList.toggle('on'); onToggle(b.classList.contains('on')); };
+  return b;
+}
+const CONTROLS = {
+  chips(f, changed) {
+    const w = el('div', 'chips'), opts = f.def.options, dots = !!D.theme?.colors?.[f.field];
+    const paint = () => {
+      const v = S.f[f.field], all = !isActive(f, v); w.innerHTML = '';
+      const mk = (label, on, dot, click) => { const b = el('button', 'chip' + (on ? ' on' : ''), (dot ? `<i style="border-color:${dot};background:${on ? dot : 'transparent'}"></i>` : '') + esc(label)); b.onclick = click; w.appendChild(b); };
+      mk(f.allLabel || L('all'), all, null, () => { S.f[f.field] = undefined; paint(); changed(); });
+      opts.forEach(o => { const on = all || v.includes(o); mk(valLabel(f.field, o), on, dots ? color(f.field, o) : null, () => {
+        let nx = all ? [o] : on ? v.filter(x => x !== o) : opts.filter(x => x === o || v.includes(x));
+        S.f[f.field] = nx.length && nx.length < opts.length ? nx : undefined; paint(); changed();
+      }); });
+    };
+    paint(); return w;
+  },
+  dropdown(f, changed) {
+    const w = el('div', 'sel'), v = S.f[f.field];
+    w.innerHTML = `<select><option value="">${esc(f.allLabel || L('any'))}</option>${f.def.options.map((o, i) => `<option value="${i}"${o === v ? ' selected' : ''}>${esc(valLabel(f.field, o))}</option>`).join('')}</select>`;
+    w.querySelector('select').onchange = e => { S.f[f.field] = e.target.value === '' ? undefined : f.def.options[+e.target.value]; changed(); };
+    return w;
+  },
+  'search-multi'(f, changed) {
+    const w = el('div', '', ''), opts = f.def.options;
+    w.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+    const q = el('input', 'txt'); q.placeholder = tpl(L('searchValues'), {label: f.label.toLowerCase()});
+    const list = el('div', 'sm-list'), n = el('div', 'sm-n');
+    const paint = () => {
+      const v = S.f[f.field] || [], s = q.value.trim().toLowerCase();
+      list.innerHTML = opts.filter(o => !s || String(valLabel(f.field, o)).toLowerCase().includes(s)).map(o => `<label class="sm-o"><input type="checkbox" data-i="${opts.indexOf(o)}"${v.includes(o) ? ' checked' : ''}><span>${esc(valLabel(f.field, o))}</span></label>`).join('');
+      n.textContent = v.length ? tpl(L('selectedCount'), {n: v.length}) : '';
+      list.querySelectorAll('input').forEach(c => c.onchange = () => { const o = opts[+c.dataset.i], cur = S.f[f.field] || []; const nx = c.checked ? opts.filter(x => x === o || cur.includes(x)) : cur.filter(x => x !== o); S.f[f.field] = nx.length ? nx : undefined; n.textContent = nx.length ? tpl(L('selectedCount'), {n: nx.length}) : ''; changed(); });
+    };
+    q.oninput = paint; paint(); w.append(q, list, n); return w;
+  },
+  range(f, changed) {
+    const g = f.def, fmt = fieldFmt(f.field), span = g.max - g.min || 1, step = span / 200;
+    const w = el('div', '', ''); w.style.cssText = 'display:flex;flex-direction:column;gap:10px';
+    const rg = el('div', 'rg', `<div class="rg-t"><div class="rg-f"></div></div><input type="range"><input type="range">`), vals = el('div', 'rg-v', '<span></span><span></span>');
+    const [a, b] = rg.querySelectorAll('input'), fill = rg.querySelector('.rg-f');
+    [a, b].forEach(i => { i.min = g.min; i.max = g.max; i.step = step; });
+    const v = S.f[f.field] || [g.min, g.max]; a.value = v[0]; b.value = v[1];
+    const send = debounce(changed);
+    const upd = fire => { let lo = +a.value, hi = +b.value; if (lo > hi) [lo, hi] = [hi, lo]; fill.style.left = (lo - g.min) / span * 100 + '%'; fill.style.right = (1 - (hi - g.min) / span) * 100 + '%'; vals.children[0].textContent = fmt(lo); vals.children[1].textContent = fmt(hi); if (fire) { S.f[f.field] = lo <= g.min && hi >= g.max ? undefined : [lo, hi]; send(); } };
+    a.oninput = b.oninput = () => upd(true); upd(false);
+    w.append(rg, vals); return w;
+  },
+  toggle(f, changed) { return switchCtl(f.label, S.f[f.field] === true, on => { S.f[f.field] = on || undefined; changed(); }); },
+  search(f, changed) {
+    const i = el('input', 'txt'); i.type = 'search'; i.placeholder = f.label; i.value = S.f[f.field] || '';
+    const send = debounce(changed);
+    i.oninput = () => { S.f[f.field] = i.value || undefined; send(); };
+    return i;
+  },
+  'date-range'(f, changed) {
+    const w = el('div', 'dates'), v = S.f[f.field] || [null, null], g = f.def;
+    w.innerHTML = `<input type="date" min="${isoOf(g.min)}" max="${isoOf(g.max)}" value="${v[0] || ''}"><span>–</span><input type="date" min="${isoOf(g.min)}" max="${isoOf(g.max)}" value="${v[1] || ''}">`;
+    const [a, b] = w.querySelectorAll('input');
+    a.onchange = b.onchange = () => { S.f[f.field] = a.value || b.value ? [a.value || null, b.value || null] : undefined; changed(); };
+    return w;
+  }
+};
+function summary(f, v) {
+  const fmt = fieldFmt(f.field), lab = x => valLabel(f.field, x);
+  switch (f.control) {
+    case 'chips': case 'search-multi': return v.slice(0, 2).map(lab).join(', ') + (v.length > 2 ? ` +${v.length - 2}` : '');
+    case 'dropdown': return lab(v);
+    case 'range': return `${fmt(v[0])} – ${fmt(v[1])}`;
+    case 'search': return `“${v}”`;
+    case 'date-range': return `${v[0] ? F.day.format(dateOf(dayOf(v[0]))) : '…'} – ${v[1] ? F.day.format(dateOf(dayOf(v[1]))) : '…'}`;
+  }
+  return '';
+}
+function activeChips() {
+  const out = [];
+  AF.filter(f => f.placement === 'advanced' && isActive(f, S.f[f.field])).forEach(f => out.push({label: f.label, value: f.control === 'toggle' ? '' : summary(f, S.f[f.field]), clear: () => { S.f[f.field] = undefined; }}));
+  Object.entries(adhoc()).forEach(([k, vals]) => out.push({label: fLabel(k), value: vals.map(x => valLabel(k, x)).join(', '), chart: true, clear: () => { delete adhoc()[k]; }}));
+  return out;
+}
+
+/* ---------- page shell ---------- */
+function bindText() { document.querySelectorAll('[data-bind]').forEach(n => { n.textContent = n.dataset.bind.split('.').reduce((o, k) => o?.[k], D) ?? ''; }); }
+function ctxBase() { const [a, b] = bounds('current'); return {n: days(), range: TIME ? F.span.formatRange(dateOf(a), dateOf(b)) : ''}; }
+function renderShell() {
+  document.title = D.meta?.documentTitle || D.brand?.name || '';
+  bindText();
+  $('nav').innerHTML = D.tabs.map(t => `<a href="#${esc(t.id)}" data-tab="${esc(t.id)}">${esc(t.label)}</a>`).join('');
+  const sb = D.sidebar || {};
+  $('sources').innerHTML = (sb.sources?.length ? `<div class="src-t">${esc(sb.sourcesTitle)}</div>${sb.sources.map(s => `<div class="src-r"><span>${esc(s.name)}</span><span>${esc(s.detail)}</span></div>`).join('')}` : '') + (sb.footer ? `<div class="src-f">${esc(sb.footer)}</div>` : '');
+}
+function renderHeader() {
+  const t = curTab(), ctx = ctxBase();
+  $('tabTitle').textContent = tpl(t.title ?? t.label, ctx); $('tabSub').textContent = tpl(t.subtitle, ctx);
+  $('nav').querySelectorAll('a').forEach(a => a.classList.toggle('on', a.dataset.tab === t.id));
+}
+function refresh(keepDrawer) { renderFilters(); renderHeader(); drawAll(); if (!keepDrawer && $('drawer')) openDrawer(); }
+const FUNNEL_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 4h12M4.5 8h7M7 12h2"/></svg>';
+function renderFilters() {
+  const box = $('filters'), t = curTab(); box.innerHTML = '';
+  if (t.hideFilters) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  const row = el('div', 'frow'), add = (n, sep) => { if (sep && row.children.length) row.appendChild(el('div', 'fdiv')); row.appendChild(n); };
+  if (TIME) {
+    const presets = TIME.presets || [{label: '7D', days: 7}, {label: '30D', days: 30}, {label: '90D', days: 90}];
+    const cur = S.time.custom ? 'custom' : S.time.days;
+    add(segmented(presets.map(p => [p.days, p.label]).concat(TIME.custom ? [['custom', L('custom')]] : []), cur, v => {
+      if (v === 'custom') { const [a, b] = bounds('current'); S.time = {custom: [a, b]}; } else S.time = {days: v};
+      refresh();
+    }));
+    if (S.time.custom) {
+      const w = el('div', 'dates'), [a, b] = S.time.custom, lo = isoOf(MINDAY), hi = isoOf(ASOF);
+      w.innerHTML = `<span>${esc(L('from'))}</span><input type="date" min="${lo}" max="${hi}" value="${isoOf(a)}"><span>${esc(L('to'))}</span><input type="date" min="${lo}" max="${hi}" value="${isoOf(b)}">`;
+      const [i1, i2] = w.querySelectorAll('input');
+      i1.onchange = i2.onchange = () => { if (!i1.value || !i2.value) return; let x = dayOf(i1.value), y = dayOf(i2.value); if (x > y) [x, y] = [y, x]; S.time = {custom: [x, y]}; refresh(); };
+      row.appendChild(w);
+    }
+    if (TIME.compare !== 'hidden') add(switchCtl(L('compare'), S.compare, on => { S.compare = on; renderHeader(); drawAll(); }), true);
+  }
+  AF.filter(f => f.placement === 'primary').forEach(f => add(CONTROLS[f.control](f, () => refresh(true)), true));
+  row.appendChild(el('div', 'fsp'));
+  const adv = AF.filter(f => f.placement === 'advanced');
+  const chips = activeChips();
+  if (adv.length) {
+    const b = el('button', 'adv', `${FUNNEL_ICON}<span>${esc(L('advanced'))}</span>${chips.length ? `<b>${chips.length}</b>` : ''}`);
+    b.onclick = openDrawer; row.appendChild(b);
+  }
+  const r = el('button', 'reset'); r.textContent = L('reset'); r.onclick = resetAll; row.appendChild(r);
+  box.appendChild(row);
+  if (chips.length) {
+    const ac = el('div', 'active');
+    chips.forEach(c => {
+      const n = el('div', 'ac', `${esc(c.label)}${c.value ? `<span>: ${esc(c.value)}</span>` : ''}${c.chart ? `<em>${esc(L('fromChart'))}</em>` : ''}<button title="${esc(L('removeFilter'))}">×</button>`);
+      n.querySelector('button').onclick = () => { c.clear(); refresh(); };
+      ac.appendChild(n);
+    });
+    box.appendChild(ac);
+  }
+}
+function closeDrawer() { $('drawer')?.remove(); $('scrim')?.remove(); }
+function openDrawer() {
+  closeDrawer();
+  const t = curTab(), adv = AF.filter(f => f.placement === 'advanced');
+  const scrim = el('div', 'scrim'); scrim.id = 'scrim'; scrim.onclick = closeDrawer;
+  const dr = el('aside', 'drawer'); dr.id = 'drawer';
+  dr.innerHTML = `<div class="dr-h"><div>${esc(L('advanced'))}</div><button class="dr-x" aria-label="Close">×</button></div><div class="dr-b"></div><div class="dr-ft"><button class="btn ghost" data-a="clear">${esc(L('clearAll'))}</button><button class="btn" data-a="done">${esc(L('done'))}</button></div>`;
+  const body = dr.querySelector('.dr-b'), changed = () => { renderFilters(); renderHeader(); drawAll(); };
+  [['global', L('allTabs')], ['tab', tpl(L('thisTab'), {tab: t.label})]].forEach(([scope, title]) => {
+    const list = adv.filter(f => f.scope === scope); if (!list.length) return;
+    body.appendChild(el('div', 'dr-sec', esc(title)));
+    list.forEach(f => {
+      const sec = el('div', 'dr-f'), head = el('div', 'dr-l', `<span>${esc(f.control === 'toggle' ? '' : f.label)}</span>`);
+      if (f.control !== 'toggle') { const c = el('button'); c.textContent = L('clear'); c.onclick = () => { S.f[f.field] = undefined; refresh(); }; head.appendChild(c); sec.appendChild(head); }
+      sec.appendChild(CONTROLS[f.control](f, changed));
+      body.appendChild(sec);
+    });
+  });
+  dr.querySelector('.dr-x').onclick = closeDrawer;
+  dr.querySelector('[data-a=done]').onclick = closeDrawer;
+  dr.querySelector('[data-a=clear]').onclick = () => { adv.forEach(f => S.f[f.field] = undefined); S.adhoc[S.tab] = {}; refresh(); };
+  document.body.append(scrim, dr);
+}
+addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+const filterDefaults = () => Object.fromEntries([...(D.filters || []), ...D.tabs.flatMap(t => t.filters || [])].filter(f => f.default !== undefined).map(f => [f.field, f.default]));
+function resetAll() {
+  S.time = {days: TIME?.default ?? TIME?.presets?.[0]?.days ?? 30}; S.compare = TIME?.compare !== 'off'; S.f = filterDefaults(); S.adhoc[S.tab] = {};
+  for (const k in MS) delete MS[k];
+  renderTab();
+}
+const curTab = () => D.tabs.find(t => t.id === S.tab) || D.tabs[0];
+function filtersFor(t) {
+  return [...(D.filters || []).map(f => ({...f, scope: 'global'})), ...(t.filters || []).map(f => ({...f, scope: 'tab'}))].map(f => {
+    const def = FIELDS[f.field];
+    return {...f, def, label: f.label || def.label, control: DashboardValidator.controlFor(def, f, def.options.length), placement: f.placement || 'advanced'};
+  });
+}
+
+/* ---------- modules ---------- */
+function splitInfo(m) {
+  if (!m.segments?.length) return null;
+  const base = m.type === 'donut' || (m.type === 'bar' && (m.layout === 'ranked' || m.layout === 'diverging')) ? m.groupBy
+    : m.type === 'area' || (m.type === 'bar' && m.layout === 'stacked-100') ? m.stackBy : m.type === 'scatter' ? m.color : null;
+  const opts = (base ? [base] : [null]).concat(m.segments.filter(s => s !== base));
+  return {opts, def: m.split !== undefined ? m.split : base ?? null};
+}
+function mount(m, parent) {
+  if (m.type === 'stack') { const st = el('div', 'stack'); st.style.gridColumn = `span ${m.span || 12}`; parent.appendChild(st); m.modules.forEach(c => mount(c, st)); return; }
+  const si = splitInfo(m);
+  MS[m.id] = MS[m.id] || {measure: m.measures?.[0] || m.measure, sortBy: m.sort?.by, sortDir: m.sort?.dir, split: si ? si.def : null};
+  let body, card = null;
+  if (m.type === 'kpi') body = el('div', 'kpis');
+  else {
+    card = el('article', 'card', `<header class="card-h"><div><div class="card-t"></div><div class="card-d"></div></div><div class="ctl"></div></header><div class="body${m.type === 'table' ? ' bleed' : ''}"></div>`);
+    body = card.querySelector('.body');
+  }
+  const node = card || body; if (parent.classList.contains('grid')) node.style.gridColumn = `span ${m.span || 12}`;
+  parent.appendChild(node);
+  const mt = {m, el: body, card, si};
+  MOUNTS.push(mt); controls(mt);
+}
+function controls(mt) {
+  const {m, card, si} = mt; if (!card) return;
+  const ms = MS[m.id], ctl = card.querySelector('.ctl'); ctl.innerHTML = '';
+  if (si) {
+    const w = el('label', 'split', `<span>${esc(L('splitBy'))}</span><div class="sel"><select>${si.opts.map((o, i) => `<option value="${i}"${o === ms.split ? ' selected' : ''}>${esc(o ? fLabel(o) : L('none'))}</option>`).join('')}</select></div>`);
+    w.querySelector('select').onchange = e => { ms.split = si.opts[+e.target.value]; draw(mt); };
+    ctl.appendChild(w);
+  }
+  if (m.measures?.length > 1 && m.type !== 'kpi') ctl.appendChild(segmented(m.measures.map(x => [x, mLabel(x)]), ms.measure, v => { ms.measure = v; controls(mt); draw(mt); }));
+}
+function draw(mt) {
+  const {m, el: body, card} = mt, ctx = ctxBase(), ms = MS[m.id];
+  ctx.measure = mLabel(ms.measure);
+  const splitField = ms.split || (mt.si ? null : [].concat(m.groupBy ?? [])[0]);
+  ctx.split = splitField ? String(fLabel(splitField)).toLowerCase() : '';
+  tip.hide(); body.innerHTML = '';
+  body.style.height = AUTO.has(m.type) || (m.type === 'bar' && AUTO_BARS.has(m.layout)) ? '' : (m.height || HEIGHTS[m.type] || 300) + 'px';
+  const header = () => { if (!card) return; card.querySelector('.card-t').textContent = tpl(m.title, ctx); card.querySelector('.card-d').textContent = tpl(m.description, ctx); };
+  try {
+    const p = RENDER[m.type](body, m, ms, ctx); header();
+    if (p?.catch) p.catch(err => { body.innerHTML = `<div class="err">${esc(err.message)}</div>`; });
+  } catch (err) { console.error(err); header(); body.innerHTML = `<div class="err">${esc(m.id)}: ${esc(err.message)}</div>`; }
+}
+function drawAll() { MOUNTS.forEach(mt => { try { draw(mt); } catch (err) { console.error(err); } }); }
+function renderTab() {
+  closeDrawer();
+  MOUNTS = []; const g = $('grid'); g.innerHTML = '';
+  AF = filtersFor(curTab());
+  renderHeader(); renderFilters();
+  curTab().modules.forEach(m => mount(m, g));
+  drawAll(); scrollTo(0, 0);
+}
+
+/* ---------- load + validate ---------- */
+function showErrors(errs, src) {
+  const n = errs.length;
+  document.title = 'Dashboard configuration error';
+  document.body.innerHTML = `<div class="inv"><div class="inv-c"><div class="inv-t">This dashboard can’t be shown</div><div class="inv-s">${n} problem${n > 1 ? 's' : ''} in <code>${esc(src)}</code>. Nothing is rendered until the file is valid. Fix the items below, or run <code>node validate.js ${esc(src)}</code> to check.</div><ol>${errs.slice(0, 60).map(e => `<li><code>${esc(e.path)}</code><span>${esc(e.message)}</span></li>`).join('')}</ol>${n > 60 ? `<div class="inv-s">…and ${n - 60} more.</div>` : ''}</div></div>`;
+}
+async function load() {
+  const inline = document.getElementById('dashboard-data');
+  if (inline) return {json: JSON.parse(inline.textContent), src: 'inline dashboard-data'};
+  const url = new URLSearchParams(location.search).get('data') || 'dashboard.json';
+  const r = await fetch(url); if (!r.ok) throw new Error(`Could not load ${url} (${r.status})`);
+  return {json: JSON.parse(await r.text()), src: url, base: url};
+}
+async function loadSchema(json, base) {
+  const inline = document.getElementById('dashboard-schema');
+  if (inline) return JSON.parse(inline.textContent);
+  try { const u = new URL(json.$schema || 'dashboard.schema.json', new URL(base || 'dashboard.json', location.href)); const r = await fetch(u); return r.ok ? r.json() : null; } catch { return null; }
+}
+(async () => {
+  let src = 'dashboard.json';
+  try {
+    const got = await load(); src = got.src;
+    const schema = await loadSchema(got.json, got.base);
+    if (!window.DashboardValidator) throw new Error('validate.js did not load; it must sit next to Dashboard.html');
+    const errs = DashboardValidator.validateDashboard(got.json, schema);
+    if (errs.length) return showErrors(errs, src);
+    D = got.json;
+  } catch (err) { return showErrors([{path: '$', message: err.message}], src); }
+  makeFormats(); prep();
+  S = {tab: location.hash.slice(1), time: {days: TIME?.default ?? TIME?.presets?.[0]?.days ?? 30}, compare: TIME?.compare !== 'off', f: filterDefaults(), adhoc: {}};
+  renderShell(); renderTab();
+  addEventListener('hashchange', () => { S.tab = location.hash.slice(1); renderTab(); });
+  let lastW = $('grid').clientWidth, timer;
+  new ResizeObserver(() => { const w = $('grid').clientWidth; if (w === lastW) return; lastW = w; clearTimeout(timer); timer = setTimeout(drawAll, 140); }).observe($('grid'));
+})();
+</script>
+</body>
+</html>

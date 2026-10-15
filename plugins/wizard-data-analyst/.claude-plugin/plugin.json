@@ -1,0 +1,8 @@
+{
+  "name": "wizard-data-analyst",
+  "version": "0.1.0",
+  "description": "Analiză de date pentru firme: dai un folder cu Excel-uri, CSV-uri, PDF-uri și exporturi, primești un dashboard interactiv într-un singur fișier HTML, cu grafice, filtre și concluzii.",
+  "author": {"name": "Silviu", "url": "https://github.com/silviu-life"},
+  "repository": "https://github.com/silviu-life/wizard-data-analyst",
+  "keywords": ["analiza-date", "dashboard", "business-intelligence", "wizard"]
+}

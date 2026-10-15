@@ -1,0 +1,1286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dashboard.schema.json",
+  "title": "Dashboard configuration",
+  "description": "Everything Dashboard.html shows comes from one document of this shape: brand, sidebar, tabs, filters, charts, labels and the data itself. Validate with `node validate.js dashboard.json` before shipping.",
+  "type": "object",
+  "required": [
+    "version",
+    "brand",
+    "datasets",
+    "measures",
+    "tabs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path to this schema, for editors."
+    },
+    "version": {
+      "const": 2,
+      "description": "Schema version. Must be 2."
+    },
+    "locale": {
+      "type": "string",
+      "description": "BCP 47 locale used for every number and date.",
+      "examples": [
+        "en-US",
+        "de-DE",
+        "ro-RO"
+      ]
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217 code used by currency fields and formats.",
+      "examples": [
+        "USD",
+        "EUR"
+      ]
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "documentTitle": {
+          "type": "string",
+          "description": "Browser tab title."
+        },
+        "updated": {
+          "type": "string",
+          "description": "Free text shown top right, e.g. 'Updated Oct 14, 09:12'."
+        }
+      }
+    },
+    "brand": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mark": {
+          "type": "string",
+          "maxLength": 3,
+          "description": "1–3 characters shown in the square logo."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtitle": {
+          "type": "string"
+        }
+      }
+    },
+    "sidebar": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sourcesTitle": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Short note such as a row count."
+              }
+            }
+          }
+        },
+        "footer": {
+          "type": "string"
+        }
+      }
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Every UI string. Placeholders in braces, e.g. 'vs previous {n} days'. Missing keys fall back to built-in English."
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "colors": {
+          "type": "object",
+          "description": "Fixed colors per field value: { fieldName: { value: '#hex' } }. Keeps a channel the same color everywhere.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/hex"
+            }
+          }
+        },
+        "categorical": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "$ref": "#/$defs/hex"
+          },
+          "description": "Fallback palette, used in order of the field's values."
+        }
+      }
+    },
+    "time": {
+      "$ref": "#/$defs/time"
+    },
+    "datasets": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Raw tables keyed by id. The page aggregates them; do not pre-aggregate what a chart can compute.",
+      "additionalProperties": {
+        "$ref": "#/$defs/dataset"
+      }
+    },
+    "measures": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Named numbers charts can show, keyed by id.",
+      "additionalProperties": {
+        "$ref": "#/$defs/measure"
+      }
+    },
+    "filters": {
+      "type": "array",
+      "description": "Global filters, shown on every tab. Applied to every dataset that has the field.",
+      "items": {
+        "$ref": "#/$defs/filter"
+      }
+    },
+    "tabs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/tab"
+      }
+    }
+  },
+  "$defs": {
+    "hex": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "fieldName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "snake_case field name. The same name in two datasets means the same thing: one filter applies to both."
+    },
+    "fieldType": {
+      "enum": [
+        "date",
+        "datetime",
+        "category",
+        "ordinal",
+        "text",
+        "id",
+        "number",
+        "currency",
+        "percent",
+        "boolean",
+        "geo",
+        "duration"
+      ],
+      "description": "date: 'YYYY-MM-DD'. datetime: ISO 8601. category: text from a fixed set. ordinal: category with an order (values required). text: free text. id: identifier. number. currency: amount in root currency. percent: fraction, 0.25 = 25%. boolean. geo: ISO 3166-1 numeric country code as string, e.g. '840'. duration: seconds."
+    },
+    "format": {
+      "enum": [
+        "currency",
+        "currencyFull",
+        "currency2",
+        "integer",
+        "number",
+        "numberFull",
+        "percent",
+        "percent1",
+        "percent2",
+        "ratio",
+        "ratio2",
+        "duration"
+      ]
+    },
+    "field": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "type": {
+          "$ref": "#/$defs/fieldType"
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown in filters, split menus and chips."
+        },
+        "description": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "category: allowed values, in display order (optional; derived from rows if absent). ordinal: required, low to high."
+        },
+        "labelField": {
+          "$ref": "#/$defs/fieldName",
+          "description": "geo: field in the same dataset with the display name."
+        },
+        "nullable": {
+          "type": "boolean",
+          "description": "Allow null in rows."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "ordinal"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "values"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "geo"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "labelField"
+            ]
+          }
+        }
+      ]
+    },
+    "dataset": {
+      "type": "object",
+      "required": [
+        "fields",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/field"
+          },
+          "description": "Column definitions, in row order."
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array"
+          },
+          "description": "Each row is an array of values in the order of `fields`."
+        }
+      }
+    },
+    "measure": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/$defs/fieldName",
+          "description": "Numeric field to aggregate."
+        },
+        "agg": {
+          "enum": [
+            "sum",
+            "avg",
+            "min",
+            "max",
+            "count",
+            "distinct"
+          ],
+          "description": "Default sum. count needs no field; distinct counts unique values of field."
+        },
+        "ratio": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "string"
+          },
+          "description": "[numerator, denominator] measure ids. Computed after aggregation, so ROAS stays correct under any filter."
+        },
+        "format": {
+          "$ref": "#/$defs/format"
+        },
+        "better": {
+          "enum": [
+            "up",
+            "down",
+            "neutral"
+          ],
+          "description": "Which direction is good. Colors changes green or red. Default up."
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "field"
+          ]
+        },
+        {
+          "required": [
+            "ratio"
+          ]
+        },
+        {
+          "required": [
+            "agg"
+          ],
+          "properties": {
+            "agg": {
+              "const": "count"
+            }
+          }
+        }
+      ],
+      "errorMessage": "needs \"field\", \"ratio\" or agg \"count\""
+    },
+    "time": {
+      "type": "object",
+      "required": [
+        "field"
+      ],
+      "additionalProperties": false,
+      "description": "The main date filter. Always in the filter bar. Applies to every dataset with this field.",
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "asOf": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "Last day of data. Presets count back from here. Defaults to the latest date in the data."
+        },
+        "presets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "days"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "days": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        "default": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Days of the preset selected on load."
+        },
+        "custom": {
+          "type": "boolean",
+          "description": "Offer a custom from/to picker."
+        },
+        "compare": {
+          "enum": [
+            "on",
+            "off",
+            "hidden"
+          ],
+          "description": "Compare-to-previous toggle: on/off by default, or hidden."
+        }
+      }
+    },
+    "filter": {
+      "type": "object",
+      "required": [
+        "field"
+      ],
+      "additionalProperties": false,
+      "description": "Mark a field as filterable. The page picks the control from the field type unless `control` is set.",
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "label": {
+          "type": "string"
+        },
+        "allLabel": {
+          "type": "string",
+          "description": "Text for the 'everything' option, e.g. 'All channels'."
+        },
+        "control": {
+          "enum": [
+            "chips",
+            "dropdown",
+            "search-multi",
+            "range",
+            "toggle",
+            "search",
+            "date-range"
+          ],
+          "description": "Auto: category ≤6 values → chips, more → search-multi; ordinal → chips (≤6) or dropdown; boolean → toggle; number/currency/percent/duration → range; text/id → search; geo → search-multi; date → date-range."
+        },
+        "placement": {
+          "enum": [
+            "primary",
+            "advanced"
+          ],
+          "description": "Default advanced (inside the Advanced filters drawer). primary puts it in the bar; only chips, dropdown, toggle and search can be primary."
+        },
+        "default": {
+          "description": "Initial value. chips/search-multi: array of values. dropdown: a value. range: [min, max]. toggle: true. search: string. date-range: ['YYYY-MM-DD', 'YYYY-MM-DD']."
+        }
+      }
+    },
+    "tab": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "modules"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string",
+          "description": "Sidebar text."
+        },
+        "title": {
+          "type": "string",
+          "description": "Page heading. Placeholders: {range}, {n}."
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filter"
+          },
+          "description": "Extra filters for this tab only."
+        },
+        "hideFilters": {
+          "type": "boolean"
+        },
+        "modules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/module"
+          }
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/$defs/fieldName",
+          "description": "Show a field value (first row of the group)."
+        },
+        "measure": {
+          "type": "string",
+          "description": "Show an aggregated measure."
+        },
+        "sub": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fieldName"
+          },
+          "description": "Fields shown small under the value."
+        },
+        "color": {
+          "$ref": "#/$defs/fieldName",
+          "description": "Draw a color dot from theme.colors[color]."
+        },
+        "strong": {
+          "type": "boolean"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Relative width (fr)."
+        },
+        "status": {
+          "type": "object",
+          "required": [
+            "measure",
+            "rules"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "measure": {
+              "type": "string"
+            },
+            "rules": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "label"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "min": {
+                    "type": "number"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "tone": {
+                    "enum": [
+                      "good",
+                      "neutral",
+                      "bad"
+                    ]
+                  }
+                }
+              },
+              "description": "First rule whose min ≤ value wins. Last rule should have no min."
+            }
+          }
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "One card. Required properties depend on type.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "enum": [
+            "kpi",
+            "line",
+            "area",
+            "bar",
+            "donut",
+            "table",
+            "funnel",
+            "bullet",
+            "scatter",
+            "waterfall",
+            "heatmap",
+            "cohort",
+            "treemap",
+            "calendar",
+            "choropleth",
+            "stack"
+          ]
+        },
+        "layout": {
+          "enum": [
+            "ranked",
+            "grouped",
+            "diverging",
+            "stacked-100",
+            "stacked"
+          ],
+          "description": "bar: ranked | grouped | diverging | stacked-100. area: stacked."
+        },
+        "span": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "Columns of a 12-column grid."
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 120,
+          "description": "Chart body height in px."
+        },
+        "title": {
+          "type": "string",
+          "description": "Placeholders: {measure}, {split}, {n}, {count}, {range}."
+        },
+        "description": {
+          "type": "string"
+        },
+        "dataset": {
+          "type": "string"
+        },
+        "measure": {
+          "type": "string"
+        },
+        "measures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "kpi: one tile each. line/choropleth: a switch in the card header."
+        },
+        "groupBy": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/fieldName"
+            },
+            {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/fieldName"
+              }
+            }
+          ],
+          "errorMessage": "should be a field name, or [parent, child] for treemap"
+        },
+        "stackBy": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/fieldName"
+          },
+          "description": "Fields offered in the card's 'Split by' menu. line, grouped bar: one series per value. area, stacked-100, scatter: changes stack/color field. donut, ranked, diverging: regroups."
+        },
+        "split": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Split selected on load."
+        },
+        "compare": {
+          "type": "boolean",
+          "description": "Show previous period (when the Compare toggle is on)."
+        },
+        "sparkline": {
+          "type": "boolean"
+        },
+        "bucket": {
+          "enum": [
+            "day",
+            "week",
+            "auto"
+          ],
+          "description": "line/area time buckets. auto: daily ≤31 days, weekly beyond."
+        },
+        "x": {
+          "type": "string",
+          "description": "scatter: measure. area/calendar: date field."
+        },
+        "y": {
+          "type": "string",
+          "description": "scatter: measure."
+        },
+        "size": {
+          "type": "string",
+          "description": "scatter: measure for bubble size. cohort: field with cohort size."
+        },
+        "color": {
+          "$ref": "#/$defs/fieldName",
+          "description": "Field whose theme colors to use."
+        },
+        "sort": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "by": {
+              "type": "string"
+            },
+            "dir": {
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "columns": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/column"
+              }
+            },
+            {
+              "$ref": "#/$defs/fieldName"
+            }
+          ],
+          "errorMessage": "table: array of columns. heatmap: field name"
+        },
+        "rows": {
+          "$ref": "#/$defs/fieldName",
+          "description": "heatmap: row field."
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "measure"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "measure": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "rate": {
+                "type": "string",
+                "description": "Text between steps, {rate} = conversion."
+              }
+            }
+          }
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "measure",
+              "target"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "measure": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "target": {
+                "type": "number"
+              },
+              "scale": {
+                "type": "boolean",
+                "description": "Scale target to the selected range (default true when targetDays is set)."
+              }
+            }
+          }
+        },
+        "targetDays": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "bullet: number of days the targets are for."
+        },
+        "label": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "value": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "kind": {
+          "$ref": "#/$defs/fieldName",
+          "description": "waterfall: field with 'total' or 'change'."
+        },
+        "format": {
+          "$ref": "#/$defs/format"
+        },
+        "cohort": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "period": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "cohortLabel": {
+          "type": "string"
+        },
+        "sizeLabel": {
+          "type": "string"
+        },
+        "periodLabel": {
+          "type": "string"
+        },
+        "geo": {
+          "enum": [
+            "world-110m"
+          ]
+        },
+        "key": {
+          "$ref": "#/$defs/fieldName",
+          "description": "choropleth: geo field."
+        },
+        "name": {
+          "$ref": "#/$defs/fieldName",
+          "description": "choropleth: display name field."
+        },
+        "listTop": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "colorSteps": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 9
+        },
+        "where": {
+          "type": "object",
+          "description": "Fixed pre-filter: { field: { in: [...] } | { not: [...] } }.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "in": {
+                "type": "array"
+              },
+              "not": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        "ignoreFilters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Field names (or 'time') this module ignores."
+        },
+        "reference": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "y": {
+              "type": [
+                "number",
+                "string"
+              ]
+            }
+          },
+          "description": "scatter: number or 'median'."
+        },
+        "quadrants": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "string"
+          },
+          "description": "Top-left, top-right, bottom-left, bottom-right."
+        },
+        "labelTop": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "modules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/module"
+          },
+          "description": "stack: cards stacked in one column."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "stack"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "modules"
+            ]
+          },
+          "else": {
+            "required": [
+              "id",
+              "dataset"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "kpi"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "measures"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "line"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "measures"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "area"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "x",
+              "stackBy",
+              "measure"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "bar"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "layout",
+              "groupBy",
+              "measure"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type",
+              "layout"
+            ],
+            "properties": {
+              "type": {
+                "const": "bar"
+              },
+              "layout": {
+                "const": "stacked-100"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "stackBy"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "donut"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "groupBy",
+              "measure"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "table"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "groupBy",
+              "columns"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "funnel"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "steps"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "bullet"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "items"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "scatter"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "groupBy",
+              "x",
+              "y",
+              "size"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "waterfall"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "label",
+              "value",
+              "kind"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "heatmap"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "rows",
+              "columns",
+              "measure"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "cohort"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "cohort",
+              "size",
+              "period",
+              "value"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "treemap"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "groupBy",
+              "measure"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "calendar"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "x",
+              "measure"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "choropleth"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "key",
+              "name",
+              "measures"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
