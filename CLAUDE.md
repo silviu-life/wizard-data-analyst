@@ -12,5 +12,5 @@ Pluginul conține două skill-uri:
 - `validate.js` primește schema ca al doilea argument. Fără ea, verifică doar referințele și datele.
 - După orice schimbare în `wizard-data-dashboard/scripts/` sau `workflows/`, rulează verificarea rapidă din README (build pe exemplu, apoi `check.js`). Trebuie să iasă ✓.
 - Workflow-ul (`workflows/deep-analysis.js`) e JavaScript simplu, fără TypeScript, fără `Date.now()` / `Math.random()`. Data vine prin `args.today`. Verificarea sintaxei se face din README sau cu `new Function` după ce scoți `export`.
-- `demo/genereaza_date_demo.py` scrie `./date/` în folderul curent. Cheia cu poveștile ascunse e în `demo/ce_e_ascuns_in_date.md`. Dacă schimbi generatorul, actualizează și cheia, apoi `date-demo-lumora.zip` din Releases.
+- `demo/genereaza_date_demo.py` scrie `./date/` în folderul curent. Cheia cu poveștile ascunse e în `demo/ce_e_ascuns_in_date.md`. Dacă schimbi generatorul, actualizează și cheia. README-ul îl descarcă de pe `main` prin raw.githubusercontent.com.
 - Textele pentru utilizator sunt în română.

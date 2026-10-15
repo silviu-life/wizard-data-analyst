@@ -110,20 +110,23 @@ Ca să încerci pluginul fără date reale, ai la dispoziție datele unei firme 
 
 Datele sunt murdare intenționat, exact ca la o firmă reală.
 
-**Varianta simplă:** descarcă `date-demo-lumora.zip` din [Releases](https://github.com/silviu-life/wizard-data-analyst/releases), dezarhivează-l și rulează:
+Datele se generează pe calculatorul tău, în aproximativ 30 de secunde. În folderul în care vrei să lucrezi, rulează:
+
+```
+curl -O https://raw.githubusercontent.com/silviu-life/wizard-data-analyst/main/demo/genereaza_date_demo.py
+pip install numpy openpyxl reportlab python-docx
+python3 genereaza_date_demo.py
+```
+
+Pe Windows, folosește `py` în loc de `python3`. Dacă nu vrei să scrii comenzile, cere-i lui Claude Code: „descarcă și rulează generatorul de date demo din wizard-data-analyst”.
+
+Apare un folder `date/` (~1.800 de fișiere, ~70 MB). Apoi rulează:
 
 ```
 /wizard-data-dashboard standard date/
 ```
 
-**Sau generează datele singur:**
-
-```
-pip install numpy openpyxl reportlab python-docx
-python3 demo/genereaza_date_demo.py
-```
-
-În datele demo sunt ascunse câteva povești, de exemplu o scumpire care a dublat rata de abandon sau o pană de curent care se vede în cinci surse diferite. Lista e în [`demo/ce_e_ascuns_in_date.md`](demo/ce_e_ascuns_in_date.md). Citește-o după ce rulezi analiza, ca să vezi cât a găsit Claude.
+În datele demo sunt ascunse câteva povești, de exemplu o scumpire care a dublat rata de abandon sau o pană a aplicației care se vede în cinci surse diferite. Lista e în [`demo/ce_e_ascuns_in_date.md`](demo/ce_e_ascuns_in_date.md). Citește-o după ce rulezi analiza, ca să vezi cât a găsit Claude.
 
 ## Bine de știut
 
